@@ -23,7 +23,7 @@ Engine_Moomin : CroneEngine {
 
 		// <moomin>
 		// initialize variables
-		moominParameters=Dictionary.with(*["reverbLevel"->0.05,"sub"->1.0,"attack"->1.0,"decay"->0.2,"sustain"->0.9,"release"->5.0,"portamento"->1.0]);
+		moominParameters=Dictionary.with(*["sub"->1.0,"attack"->1.0,"decay"->0.2,"sustain"->0.9,"release"->5.0,"portamento"->1.0]);
 		moominVoices=Dictionary.new;
 		moominVoicesOn=Dictionary.new;
 		pedalSustainNotes=Dictionary.new;
@@ -31,11 +31,16 @@ Engine_Moomin : CroneEngine {
 
 		// initialize synth defs
 		SynthDef("moominfx",{
-			arg in, out, reverb=0.02;
-			var snd,z,y,filterpos;
+			arg in, out, reverb=0.02, hold_control=5.0, t_trig=0.0, lpf=8000;
+			var snd,z,y,filterpos,filterswitch;
 			snd = In.ar(in,2);
 			// global filter
-			filterpos=VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine);
+			filterswitch=EnvGen.kr(Env.new([0,1,1,0],[0.5,hold_control,0.5]),gate:t_trig);
+			filterpos=SelectX.kr(filterswitch,[
+				VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine),
+				lpf
+			]);
+			
 			SendTrig.kr(Impulse.kr(5),1,filterpos);
 			snd=MoogLadder.ar(snd.tanh,LinExp.kr(filterpos,-1,1,3200,8000));
 			
@@ -219,10 +224,6 @@ Engine_Moomin : CroneEngine {
 			});
 		});
 
-		this.addCommand("moomin_reverb","f",{ arg msg;
-			moominParameters.put("reverb",msg[1]);
-			moominSynthFX.set(\reverb,msg[1]);
-		});
 		this.addCommand("moomin_sub","f",{ arg msg;
 			moominParameters.put("sub",msg[1]);
 			moominVoices.keysValuesDo({ arg note, syn;
@@ -259,6 +260,16 @@ Engine_Moomin : CroneEngine {
 				syn.set(\portamento,msg[1]);
 			});
 		});
+		this.addCommand("moomin_hold_control","f",{ arg msg;
+                        moominSynthFX.set(\hold_control,msg[1]);
+		});
+		this.addCommand("moomin_lpf","f",{ arg msg;
+                        moominSynthFX.set(\lpf,msg[1],\t_trig,1);
+		});
+		this.addCommand("moomin_reverb","f",{ arg msg;
+			moominSynthFX.set(\reverb,msg[1]);
+		});
+	
 
 		// </moomin>
 	}
