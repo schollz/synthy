@@ -6,6 +6,7 @@ Engine_Moomin : CroneEngine {
 	var moominVoicesOn;
 	var moominSynthFX;
 	var moominBusFx;
+	var moominOSFn;
 	var fnNoteOn, fnNoteOff;
 	var pedalSustainOn=false;
 	var pedalSostenutoOn=false;
@@ -31,10 +32,12 @@ Engine_Moomin : CroneEngine {
 		// initialize synth defs
 		SynthDef("moominfx",{
 			arg in, out, reverb=0.02;
-			var snd,z,y;
+			var snd,z,y,filterpos;
 			snd = In.ar(in,2);
 			// global filter
-			snd=MoogLadder.ar(snd.tanh,LinExp.kr(VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine),-1,1,3200,8000));
+			filterpos=VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine);
+			SendTrig.kr(Impulse.kr(5),1,filterpos);
+			snd=MoogLadder.ar(snd.tanh,LinExp.kr(filterpos,-1,1,3200,8000));
 			
 			// reverb predelay time :
 			z = DelayN.ar(snd, 0.048);
@@ -65,6 +68,12 @@ Engine_Moomin : CroneEngine {
 			env=EnvGen.ar(Env.adsr(attack,decay,sustain,release),gate,doneAction:2);
 			Out.ar(out,snd*env);
 		}).add;
+
+		moominOSFn = OSCFunc({ 
+            arg msg, time; 
+            // [time, msg].postln;
+            NetAddr("127.0.0.1", 10111).sendMsg("filterpos",1,msg[3]);
+        },'/tr', context.server.addr);
 
 		// initialize fx synth and bus
 		context.server.sync;

@@ -58,8 +58,8 @@ function Arm:move(pos_x,pos_y)
 end
 
 
-function Arm:draw()
-  screen.level(15)
+function Arm:draw(color)
+  screen.level(color)
   -- local r=2
   -- for i,point in ipairs(self.points) do
   --   screen.move(point[1] + r, point[2])

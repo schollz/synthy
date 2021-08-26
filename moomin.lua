@@ -1,18 +1,18 @@
--- engine.name="Velvet"
+-- moomin v0.1.0
+-- soft, melancholic synth
+--
+-- llllllll.co/t/moomin
+--
+--
+--
+--    ▼ instructions below ▼
+
 
 -- include('moomin/lib/p8')
 articulation=include('moomin/lib/arm')
+engine.name="Moomin"
 
 function init()
-	-- clock.run(function()
-	-- 	engine.velvet_note_on(60)
-	-- 	clock.sleep(2)
-	-- 	engine.velvet_note_on(60-12)
-	-- 	clock.sleep(2)
-	-- 	engine.velvet_note_on(64)
-	-- 	clock.sleep(4)
-	-- 	engine.velvet_note_off(60)
-	-- end)
 
 	for _, dev in ipairs(midi.devices) do
 	  if dev.port ~= nil then
@@ -20,9 +20,9 @@ function init()
 	    conn.event=function(data)
 	      local d=midi.to_msg(data)
 	      if d.type=="note_on" then
-	        engine.velvet_note_on(d.note)
+	        engine.moomin_note_on(d.note,0.5)
 	      elseif d.type=="note_off" then
-	      	engine.velvet_note_off(d.note)
+	      	engine.moomin_note_off(d.note)
 	      end
 	    end
 	  end
@@ -34,6 +34,11 @@ function init()
 	arms[1]:init(20,64,-1)
 	arms[2]=articulation:new()
 	arms[2]:init(128-20,64,1)
+
+	filterpos=0
+  osc.event=function(path,args,from)
+  	filterpos=tonumber(args[2])
+  end
 
 	clock.run(function()
 		while true do
@@ -77,6 +82,15 @@ end
 
 function redraw()
 	screen.clear()
+
+	local color=math.floor(util.linexp(-1,1,1,15.999,filterpos))
+	screen.level(1)
+	screen.circle(pos_x,pos_y+48,76+4)
+	screen.fill()
+	screen.level(0)
+	screen.circle(pos_x,pos_y+48,76)
+	screen.fill()
+
 	local ps={}
 	local gy={}
 	for i=1,2 do
@@ -86,7 +100,7 @@ function redraw()
 	end
 	for i, arm in ipairs(arms) do
 		arm:move(pos_x+(i-1)*20-10+gy[i][1],pos_y+gy[i][2])
-		ps[i]=arm:draw()
+		ps[i]=arm:draw(color)
 	end
 	screen.move(ps[1][3][1],ps[1][3][2])
 	screen.line(ps[2][3][1],ps[2][3][2])
@@ -96,27 +110,31 @@ function redraw()
 	local blink=math.random()<0.01
 	for i, eye in ipairs(eyes) do
 		if blink then
-			screen.level(15)
+			screen.level(color)
 		  screen.circle(eye[1]-4, eye[2]-5, 6)
 		  screen.fill()
-			screen.level(15)
+			screen.level(color)
 			screen.circle(eye[1]-4, eye[2]-5, 6)
 			screen.stroke()
 		else
 			screen.level(0)
 			screen.circle(eye[1]-4, eye[2]-5, 6)
 			screen.fill()
-			screen.level(15)
+			screen.level(color)
 			screen.circle(eye[1]-4, eye[2]-5, 6)
 			screen.stroke()
-			screen.level(15)
+			screen.level(color)
 			screen.circle(eye[1]-(i), eye[2]-(i), 2)
 			screen.fill()
 		end
 	end
 
-	local mouth=util.linlin(-1,1,15,30,calculate_lfo(30,0))
+	local mouth=util.linlin(-1,1,-10,40,filterpos)
+	screen.level(color)
 	screen.curve(eyes[1][1]+2,eyes[1][2]+6,pos_x,pos_y+mouth,eyes[2][1]-1,eyes[2][2]+7)
+	screen.stroke()
+
+
 	screen.update()
 end
 
