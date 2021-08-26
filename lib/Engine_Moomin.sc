@@ -37,12 +37,12 @@ Engine_Moomin : CroneEngine {
 			// global filter
 			filterswitch=EnvGen.kr(Env.new([0,1,1,0],[0.5,hold_control,0.5]),gate:t_trig);
 			filterpos=SelectX.kr(filterswitch,[
-				VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine),
+				LinExp.kr(VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine),-1,1,3200,8000),
 				lpf
 			]);
 			
 			SendTrig.kr(Impulse.kr(5),1,filterpos);
-			snd=MoogLadder.ar(snd.tanh,LinExp.kr(filterpos,-1,1,3200,8000));
+			snd=MoogLadder.ar(snd.tanh,filterpos);
 			
 			// reverb predelay time :
 			z = DelayN.ar(snd, 0.048);

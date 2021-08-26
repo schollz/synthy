@@ -115,12 +115,13 @@ function init()
 end
 
 
-pos_x,pos_y=30,30
+pos_x=30
 function enc(k,z)
   if k==2 then
     pos_x=pos_x+z
   elseif k==3 then
-    pos_y=pos_y-z
+	 params:delta("lpf",z)
+   --pos_y=pos_y-z
   end
 
 end
@@ -129,6 +130,7 @@ function redraw()
 	screen.clear()
 
 	local color=math.floor(util.linexp(-1,1,1,15.999,moomin.filter))
+	local pos_y=math.floor(util.linlin(1.3,4.3,128,1,math.log(moomin.filter)))
 
 	local ps={}
 	local gy={}
