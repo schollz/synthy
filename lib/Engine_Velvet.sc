@@ -68,80 +68,80 @@ Engine_Velvet : CroneEngine {
 			var lowestNote=10000;
 			var sub=0;
 			("velvet_note_on "++note).postln;
-            // low-note priority for sub oscillator
-            velvetVoicesOn.keysValuesDo({ arg key, syn;
-            	if (key<lowestNote,{
-            		lowestNote=key;
-            	});
-            });
-            if (lowestNote<10000,{
-            	if (note<lowestNote,{
-            		sub=velvetParameters.at("sub");
-            		velvetVoices.at(lowestNote).set(\sub,0);
-            	},{
-            		sub=0;
-            	});
-            },{
-            	sub=velvetParameters.at("sub");
-            });
+			// low-note priority for sub oscillator
+			velvetVoicesOn.keysValuesDo({ arg key, syn;
+				if (key<lowestNote,{
+					lowestNote=key;
+				});
+			});
+			if (lowestNote<10000,{
+				if (note<lowestNote,{
+					sub=velvetParameters.at("sub");
+					velvetVoices.at(lowestNote).set(\sub,0);
+				},{
+					sub=0;
+				});
+			},{
+				sub=velvetParameters.at("sub");
+			});
 
-            ("sub = "++sub).postln;
-            velvetVoices.put(note,
-                Synth.before(velvetSynthFX,"velvetosc",[
-                	\out,velvetBusFx,
-                	\hz,note.midicps,
-                	\sub,sub,
-                ]);
-            );
-            velvetVoicesOn.put(note,1);
-            NodeWatcher.register(velvetVoices.at(note));
+			("sub = "++sub).postln;
+			velvetVoices.put(note,
+				Synth.before(velvetSynthFX,"velvetosc",[
+					\out,velvetBusFx,
+					\hz,note.midicps,
+					\sub,sub,
+				]);
+			);
+			velvetVoicesOn.put(note,1);
+			NodeWatcher.register(velvetVoices.at(note));
 		};
 		
 		this.addCommand("velvet_note_on", "i", { arg msg;
 			var lowestNote=10000;
-            var note=msg[1];
-            if (velvetVoices.at(note)!=nil,{
-                if (velvetVoices.at(note).isRunning==true,{
-                    ("velvet_note_on retrigger "++note).postln;
-                    velvetVoices.at(note).set(\hz,msg[1].midicps,\gate,0);
-                    velvetVoices.at(note).set(\gate,1);
-		            velvetVoicesOn.keysValuesDo({ arg key, syn;
-		            	if (key<lowestNote,{
-		            		lowestNote=key;
-		            	});
-		            });
-		            if (note<lowestNote,{
-		            	("swapping sub to "++note).postln;
-	            		velvetVoices.at(lowestNote).set(\sub,0);
-	            		velvetVoices.at(note).set(\sub,velvetParameters.at("sub"));
-		            });
-		            velvetVoicesOn.put(note,1);
-                },{ fnAddVoice.(msg[1]); });
-            },{  fnAddVoice.(msg[1]); });
+			var note=msg[1];
+			if (velvetVoices.at(note)!=nil,{
+				if (velvetVoices.at(note).isRunning==true,{
+					("velvet_note_on retrigger "++note).postln;
+					velvetVoices.at(note).set(\hz,msg[1].midicps,\gate,0);
+					velvetVoices.at(note).set(\gate,1);
+					velvetVoicesOn.keysValuesDo({ arg key, syn;
+						if (key<lowestNote,{
+							lowestNote=key;
+						});
+					});
+					if (note<lowestNote,{
+						("swapping sub to "++note).postln;
+						velvetVoices.at(lowestNote).set(\sub,0);
+						velvetVoices.at(note).set(\sub,velvetParameters.at("sub"));
+					});
+					velvetVoicesOn.put(note,1);
+				},{ fnAddVoice.(msg[1]); });
+			},{  fnAddVoice.(msg[1]); });
 		});	
 
 		this.addCommand("velvet_note_off", "i", { arg msg;
 			var lowestNote=10000;
-            var note=msg[1];
-            if (velvetVoices.at(note)!=nil,{
-                if (velvetVoices.at(note).isRunning==true,{
-                	("velvet_note_off "++note).postln;
-                	velvetVoicesOn.removeAt(note);
-                    velvetVoices.at(note).set(\gate,0);
-                    // swap sub
-		            velvetVoicesOn.keysValuesDo({ arg key, syn;
-		            	if (key<lowestNote,{
-		            		lowestNote=key;
-		            	});
-		            });
-		            if (lowestNote<10000,{
-		            	("swapping sub to "++lowestNote).postln;
-	            		velvetVoices.at(note).set(\sub,0);
-	            		velvetVoices.at(lowestNote).set(\sub,velvetParameters.at("sub"));
-		            });
-		            // done swap sub
-                });
-            });
+			var note=msg[1];
+			if (velvetVoices.at(note)!=nil,{
+				if (velvetVoices.at(note).isRunning==true,{
+					("velvet_note_off "++note).postln;
+					velvetVoicesOn.removeAt(note);
+					velvetVoices.at(note).set(\gate,0);
+					// swap sub
+					velvetVoicesOn.keysValuesDo({ arg key, syn;
+						if (key<lowestNote,{
+							lowestNote=key;
+						});
+					});
+					if (lowestNote<10000,{
+						("swapping sub to "++lowestNote).postln;
+						velvetVoices.at(note).set(\sub,0);
+						velvetVoices.at(lowestNote).set(\sub,velvetParameters.at("sub"));
+					});
+					// done swap sub
+				});
+			});
 		});
 
 		// </velvet>
