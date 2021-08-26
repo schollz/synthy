@@ -32,9 +32,9 @@ function init()
 
 	arms={}
 	arms[1]=articulation:new()
-	arms[1]:init(20,64,-1)
+	arms[1]:init(20,62,-1)
 	arms[2]=articulation:new()
-	arms[2]:init(128-20,64,1)
+	arms[2]:init(128-20,62,1)
 
 	moomin.filter=0
   osc.event=function(path,args,from)
@@ -89,21 +89,57 @@ function redraw()
 	screen.clear()
 
 	local color=math.floor(util.linexp(-1,1,1,15.999,moomin.filter))
-	screen.level(1)
-	screen.circle(pos_x,pos_y+48,76+4)
-	screen.fill()
-	screen.level(0)
-	screen.circle(pos_x,pos_y+48,76)
-	screen.fill()
+	-- screen.level(1)
+	-- screen.circle(pos_x,pos_y+48,76+4)
+	-- screen.fill()
+	-- screen.level(0)
+	-- screen.circle(pos_x,pos_y+48,76)
+	-- screen.fill()
+
+	-- screen.level(1)
+	-- for i=1,3 do
+	-- 	local r=38+i
+	-- 	local x=pos_x
+	-- 	local y=pos_y+24
+	-- 	screen.arc(x,y,r,-1.3,-1.5)
+	-- 	screen.stroke()
+	-- 	screen.move(x,y)
+	-- 	screen.line(x+r*math.cos(-1.5),y+r*math.sin(-1.5))
+	-- 	screen.stroke()
+	-- 	screen.move(x,y)
+	-- 	screen.line(x+r*math.cos(-1.3),y+r*math.sin(-1.3))
+	-- 	screen.stroke()
+	-- end
 
 	local ps={}
 	local gy={}
+	local base={}
 	for i=1,2 do
 		gy[i]={}
 		gy[i][1]=util.linlin(-1,1,-1,2,calculate_lfo(i*4,i*2))
 		gy[i][2]=util.linlin(-1,1,-1,2,calculate_lfo(i*5,i*3))
+		if i==1 then
+			base[i]=util.linlin(-1,1,16,24,calculate_lfo(i*5,i*3))
+		else
+			base[i]=util.linlin(-1,1,128-24,128-16,calculate_lfo(i*5,i*3))
+		end
 	end
+
+	screen.line_width(1)
+	screen.level(util.clamp(color-3,1,15))
+	for i=1,2 do
+		screen.move(base[i],62)
+		if i==1 then
+			screen.curve(1-20+rmove(4*i,i),64+rmove(3*i,i),1,-30,128-pos_x,pos_y+5)
+		else
+			screen.curve(128+10+rmove(4*i,i),64+rmove(3*i,i),128,-10,128-pos_x,pos_y+5)
+		end
+		screen.stroke()
+	end
+
+	screen.line_width(2)
 	for i, arm in ipairs(arms) do
+		arm:set_base(base[i],62)
 		arm:move(pos_x+(i-1)*20-10+gy[i][1],pos_y+gy[i][2])
 		ps[i]=arm:draw(color)
 	end
@@ -111,6 +147,7 @@ function redraw()
 	screen.line(ps[2][3][1],ps[2][3][2])
 	screen.stroke()
 
+	screen.line_width(1)
 	local eyes={{ps[1][3][1]-5,ps[1][3][2]+4},{ps[2][3][1]+5,ps[2][3][2]-4}}
 	local blink=math.random()<0.01
 	for i, eye in ipairs(eyes) do
@@ -122,26 +159,32 @@ function redraw()
 			screen.circle(eye[1]-4, eye[2]-5, 6)
 			screen.stroke()
 		else
+			local pyadjust=0
+			if i==1 then
+				pyadjust=-2
+			end
 			screen.level(0)
-			screen.circle(eye[1]-4, eye[2]-5, 3+i)
+			screen.circle(eye[1]-4, eye[2]-5+pyadjust, 3+i)
 			screen.fill()
 			screen.level(color)
-			screen.circle(eye[1]-4, eye[2]-5, 3+i)
+			screen.circle(eye[1]-4, eye[2]-5+pyadjust, 3+i)
 			screen.stroke()
 			screen.level(color)
-			screen.circle(eye[1]-5+i, eye[2]-(i*0.5)-2, 2)
+			screen.circle(eye[1]-5+i, eye[2]-(i*0.5)-2+pyadjust, 2)
 			screen.fill()
 		end
 	end
 
+	screen.line_width(2)
 	local mouth=util.linlin(0,0.02,5,40,moomin.amplitude)
 	screen.level(color)
 	screen.curve(eyes[1][1]+2,eyes[1][2]+6,pos_x,pos_y+mouth,eyes[2][1]-1,eyes[2][2]+7)
 	screen.stroke()
-	-- mouth=util.linlin(0,0.02,5,40,moomin.amplitude)
-	-- screen.level(color)
-	-- screen.curve(eyes[1][1]+2,eyes[1][2]+6,pos_x,pos_y+mouth,eyes[2][1]-1,eyes[2][2]+7)
-	-- screen.stroke()
+
+	screen.level(color)
+	screen.move(base[1],62)
+	screen.line(base[2],62)
+	screen.stroke()
 
 	screen.update()
 end
@@ -149,6 +192,13 @@ end
 
 function rerun()
   norns.script.load(norns.state.script)
+end
+
+function rmove(period,offset,amt)
+	if amt==nil then
+		amt=4
+	end
+	return util.linlin(-1,1,-amt,amt,calculate_lfo(period,offset))
 end
 
 function calculate_lfo(period,offset)

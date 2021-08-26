@@ -42,6 +42,11 @@ end
 --  flip()
 -- end
 
+function Arm:set_base(x,y)
+  self.base_x=x 
+  self.base_y=y
+end
+
 function Arm:move(pos_x,pos_y)
   self.target={pos_x,pos_y}
   local u,v,e,f,p,q=self.u,0,pos_x,pos_y,self.base_x,self.base_y
