@@ -15,8 +15,11 @@ Engine_Velvet : CroneEngine {
 
 	alloc {
 
-		velvetParameters=Dictionary.with(*["reverbLevel"->0.05,"sub"->3.0]);
+		// <velvet>
+		velvetParameters=Dictionary.with(*["reverbLevel"->0.05,"sub"->1.0]);
 		velvetVoices=Dictionary.new;
+		velvetVoicesOn=Dictionary.new;
+
 		SynthDef("velvetfx",{
 			arg in, out, reverbLevel=0.02;
 			var snd,z,y;
@@ -67,10 +70,8 @@ Engine_Velvet : CroneEngine {
 			("velvet_note_on "++note).postln;
             // low-note priority for sub oscillator
             velvetVoicesOn.keysValuesDo({ arg key, syn;
-            	if (syn.isRunning==true,{
-	            	if (key<lowestNote,{
-	            		lowestNote=key;
-	            	});
+            	if (key<lowestNote,{
+            		lowestNote=key;
             	});
             });
             if (lowestNote<10000,{
@@ -92,16 +93,29 @@ Engine_Velvet : CroneEngine {
                 	\sub,sub,
                 ]);
             );
+            velvetVoicesOn.put(note,1);
             NodeWatcher.register(velvetVoices.at(note));
 		};
 		
 		this.addCommand("velvet_note_on", "i", { arg msg;
+			var lowestNote=10000;
             var note=msg[1];
             if (velvetVoices.at(note)!=nil,{
                 if (velvetVoices.at(note).isRunning==true,{
                     ("velvet_note_on retrigger "++note).postln;
                     velvetVoices.at(note).set(\hz,msg[1].midicps,\gate,0);
                     velvetVoices.at(note).set(\gate,1);
+		            velvetVoicesOn.keysValuesDo({ arg key, syn;
+		            	if (key<lowestNote,{
+		            		lowestNote=key;
+		            	});
+		            });
+		            if (note<lowestNote,{
+		            	("swapping sub to "++note).postln;
+	            		velvetVoices.at(lowestNote).set(\sub,0);
+	            		velvetVoices.at(note).set(\sub,velvetParameters.at("sub"));
+		            });
+		            velvetVoicesOn.put(note,1);
                 },{ fnAddVoice.(msg[1]); });
             },{  fnAddVoice.(msg[1]); });
 		});	
@@ -112,15 +126,12 @@ Engine_Velvet : CroneEngine {
             if (velvetVoices.at(note)!=nil,{
                 if (velvetVoices.at(note).isRunning==true,{
                 	("velvet_note_off "++note).postln;
+                	velvetVoicesOn.removeAt(note);
                     velvetVoices.at(note).set(\gate,0);
                     // swap sub
-		            velvetVoices.keysValuesDo({ arg key, syn;
-		            	if (key==note,{},{
-			            	if (syn.isRunning==true,{
-				            	if (key<lowestNote,{
-				            		lowestNote=key;
-				            	});
-			            	});
+		            velvetVoicesOn.keysValuesDo({ arg key, syn;
+		            	if (key<lowestNote,{
+		            		lowestNote=key;
 		            	});
 		            });
 		            if (lowestNote<10000,{
@@ -132,6 +143,8 @@ Engine_Velvet : CroneEngine {
                 });
             });
 		});
+
+		// </velvet>
 	}
 
 	free {
