@@ -38,7 +38,7 @@ function init()
 	        engine.moomin_note_on(d.note,0.5+util.linlin(0,128,-0.25,0.25,d.vel))
 	      elseif d.type=="note_off" then
 	      	engine.moomin_note_off(d.note)
-	      elseif d.cc=64 -- sustain pedal
+	      elseif d.cc==64 then -- sustain pedal
 	      	local val=d.val
 	      	if val > 0 then 
 	      		val=1
