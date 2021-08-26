@@ -209,8 +209,9 @@ function redraw()
 
 	screen.update()
 
-	local deviation_x=(ps[1][3][1]-ps[2][3][1])/20
+	local deviation_x=(ps[1][3][1]-ps[2][3][1])/20-1 -- deviation around 0
 	local deviation_y=(ps[1][3][2]-ps[2][3][2])/10
+	engine.moomin_perturb1(deviation_x)
 	-- TODO: send the distance between eyes as a modulation of the volume
 	-- TODO: send average eye X/Y position as modulation of ??/??
 end

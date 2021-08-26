@@ -60,9 +60,14 @@ Engine_Moomin : CroneEngine {
 
 		SynthDef("moominosc",{
 			arg out=0,hz=220,amp=0.5,gate=1,sub=0,portamento=1,
-			attack=1.0,decay=0.2,sustain=0.9,release=5;
+			attack=1.0,decay=0.2,sustain=0.9,release=5,
+			perturb1=0,t_trig1=0;
 			var snd,note,env;
+			var perturb1val;
+			perturb1val=EnvGen.kr(Env.perc(1/30,1/30,Latch.kr(perturb1,t_trig1)),t_trig1);
+			perturb1val=VagLag.kr(perturb1val,0.1,warp:\sine); // will accept pertubations, but trend towards 0
 			note=Lag.kr(hz,portamento).cpsmidi;
+			note=note+(note*perturb1val);
 			sub=Lag.kr(sub,1);
 			snd=Pan2.ar(Pulse.ar((note-12).midicps,LinLin.kr(LFTri.kr(0.5),-1,1,0.2,0.8))/12*amp*sub);
 			snd=snd+Mix.ar({
@@ -258,6 +263,11 @@ Engine_Moomin : CroneEngine {
 			moominParameters.put("portamento",msg[1]);
 			moominVoices.keysValuesDo({ arg note, syn;
 				syn.set(\portamento,msg[1]);
+			});
+		});
+		this.addCommand("moomin_perturb1","f",{ arg msg;
+			moominVoices.keysValuesDo({ arg note, syn;
+				syn.set(\perturb1,msg[1],\t_trig1,1);
 			});
 		});
 		this.addCommand("moomin_hold_control","f",{ arg msg;
