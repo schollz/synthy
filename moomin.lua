@@ -11,6 +11,7 @@
 -- include('moomin/lib/p8')
 articulation=include('moomin/lib/arm')
 engine.name="Moomin"
+moomin={filter=0,amplitude=0}
 
 function init()
 
@@ -35,9 +36,13 @@ function init()
 	arms[2]=articulation:new()
 	arms[2]:init(128-20,64,1)
 
-	filterpos=0
+	moomin.filter=0
   osc.event=function(path,args,from)
-  	filterpos=tonumber(args[2])
+  	if args[1]==1 then
+	  	moomin.filter=tonumber(args[2])
+	  elseif args[1]==2 then
+	  	moomin.amplitude=tonumber(args[2])
+	  end
   end
 
 	clock.run(function()
@@ -83,7 +88,7 @@ end
 function redraw()
 	screen.clear()
 
-	local color=math.floor(util.linexp(-1,1,1,15.999,filterpos))
+	local color=math.floor(util.linexp(-1,1,1,15.999,moomin.filter))
 	screen.level(1)
 	screen.circle(pos_x,pos_y+48,76+4)
 	screen.fill()
@@ -106,7 +111,7 @@ function redraw()
 	screen.line(ps[2][3][1],ps[2][3][2])
 	screen.stroke()
 
-	local eyes={{ps[1][3][1]-5,ps[1][3][2]+5},{ps[2][3][1]+5,ps[2][3][2]-5}}
+	local eyes={{ps[1][3][1]-5,ps[1][3][2]+4},{ps[2][3][1]+5,ps[2][3][2]-4}}
 	local blink=math.random()<0.01
 	for i, eye in ipairs(eyes) do
 		if blink then
@@ -118,22 +123,25 @@ function redraw()
 			screen.stroke()
 		else
 			screen.level(0)
-			screen.circle(eye[1]-4, eye[2]-5, 6)
+			screen.circle(eye[1]-4, eye[2]-5, 3+i)
 			screen.fill()
 			screen.level(color)
-			screen.circle(eye[1]-4, eye[2]-5, 6)
+			screen.circle(eye[1]-4, eye[2]-5, 3+i)
 			screen.stroke()
 			screen.level(color)
-			screen.circle(eye[1]-(i), eye[2]-(i), 2)
+			screen.circle(eye[1]-5+i, eye[2]-(i*0.5)-2, 2)
 			screen.fill()
 		end
 	end
 
-	local mouth=util.linlin(-1,1,-10,40,filterpos)
+	local mouth=util.linlin(0,0.02,5,40,moomin.amplitude)
 	screen.level(color)
 	screen.curve(eyes[1][1]+2,eyes[1][2]+6,pos_x,pos_y+mouth,eyes[2][1]-1,eyes[2][2]+7)
 	screen.stroke()
-
+	-- mouth=util.linlin(0,0.02,5,40,moomin.amplitude)
+	-- screen.level(color)
+	-- screen.curve(eyes[1][1]+2,eyes[1][2]+6,pos_x,pos_y+mouth,eyes[2][1]-1,eyes[2][2]+7)
+	-- screen.stroke()
 
 	screen.update()
 end

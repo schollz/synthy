@@ -48,6 +48,8 @@ Engine_Moomin : CroneEngine {
 			// add original sound to reverb and play it :
 			snd=snd+(reverb*y);
 			snd=HPF.ar(snd,20);
+
+			SendTrig.kr(Impulse.kr(15),2,Lag.kr(Amplitude.kr(snd),2));
 			Out.ar(out,snd);
 		}).add;
 
@@ -72,7 +74,7 @@ Engine_Moomin : CroneEngine {
 		moominOSFn = OSCFunc({ 
             arg msg, time; 
             // [time, msg].postln;
-            NetAddr("127.0.0.1", 10111).sendMsg("filterpos",1,msg[3]);
+            NetAddr("127.0.0.1", 10111).sendMsg("moomin",msg[2],msg[3]);
         },'/tr', context.server.addr);
 
 		// initialize fx synth and bus
