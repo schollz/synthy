@@ -8,26 +8,79 @@
 --    ▼ instructions below ▼
 
 
--- include('moomin/lib/p8')
-articulation=include('moomin/lib/arm')
 engine.name="Moomin"
+articulation=include('moomin/lib/arm')
 moomin={filter=0,amplitude=0}
 
 function init()
 
+	-- setup midi listening
+	local midi_devices={"any"}
+	local midi_channels={"all"}
+	for i=1,16 do 
+		table.insert(midi_channels,i)
+	end
 	for _, dev in ipairs(midi.devices) do
 	  if dev.port ~= nil then
+	  	table.insert(midi_devices,dev.name)
 	    local conn=midi.connect(dev.port)
 	    conn.event=function(data)
 	      local d=midi.to_msg(data)
+	      if dev.name~=midi_devices[params:get("moomin_midi_device")]
+	      		and params:get("moomin_midi_device") > 1 then
+	      			do return end 
+	      end
+	      if d.ch~=midi_channels[params:get("moomin_midi_ch")] 
+	      		and params:get("moomin_midi_ch")>1 then
+	      			do return end
+	      end
 	      if d.type=="note_on" then
-	        engine.moomin_note_on(d.note,0.5)
+	        engine.moomin_note_on(d.note,0.5+util.linlin(0,128,-0.25,0.25,d.vel))
 	      elseif d.type=="note_off" then
 	      	engine.moomin_note_off(d.note)
+	      elseif d.cc=64 -- sustain pedal
+	      	local val=d.val
+	      	if val > 0 then 
+	      		val=1
+	      	end
+	      	if params:get("moomin_pedal")==1 then
+	      		engine.moomin_sustain(val)
+	      	else
+	      		engine.moomin_sustenuto(val)
+	      	end
 	      end
 	    end
 	  end
 	end
+
+	params:add_group("MOOMIN",9)
+	params:add_option("moomin_midi_device","midi device",midi_devices,1)
+	params:add_option("moomin_midi_ch","midi channel",midi_channels,1)
+	params:add_control("moomin_sub","sub",controlspec.new(0,3,'lin',0.1,1.0,'amp',0.1/3))
+	params:set_action("moomin_sub",function(x)
+	  engine.moomin_sub(x)
+	end)
+	params:add_control("moomin_reverb","reverb send",controlspec.new(0,100,'lin',1,2,'%',1/100))
+	params:set_action("moomin_reverb",function(x)
+	  engine.moomin_reverb(x)
+	end)
+	params:add_control("moomin_attack","attack",controlspec.new(0,30,'exp',0.001,0.1,'s',0.001/30))
+	params:set_action("moomin_attack",function(x)
+	  engine.moomin_attack(x)
+	end)
+	params:add_control("moomin_decay","decay",controlspec.new(0,30,'exp',0.001,0.1,'s',0.001/30))
+	params:set_action("moomin_decay",function(x)
+	  engine.moomin_decay(x)
+	end)
+	params:add_control("moomin_sustain","sustian",controlspec.new(0,1,'lin',0.1,1.0,'amp',0.1/1))
+	params:set_action("moomin_sustain",function(x)
+	  engine.moomin_sustain(x)
+	end)
+	params:add_control("moomin_release","release",controlspec.new(0,30,'exp',0.001,0.1,'s',0.001/30))
+	params:set_action("moomin_release",function(x)
+	  engine.moomin_release(x)
+	end)
+	params:add_option("moomin_pedal_mode","pedal mode",{"sustain","sostenuto"},1)
 
 
 	arms={}
@@ -64,52 +117,10 @@ function enc(k,z)
 
 end
 
--- -- https://twitter.com/jamesedge/status/1419289823580405768
--- l,x,y,z,w={0,0,0},0,0,0,0
--- function redraw()
---  screen.clear()
---  screen.level(15)
---  u,v,e,f,p,q=1,0,pos_x,pos_y,64,32
---  for g=1,3 do 
---    a=l[g]
---    c,s=cos(a),-sin(a)
---    u,v=u*c-v*s,u*s+v*c 
---    m,n=p+u*25,q+v*25
---    line(p,q,m,n)
---    circ(m,n,2)
---    l[g]=l[g]+((q-w)*x+(z-p)*y)*.0001
---    p,q=m,n 
---  end 
---  x,y,z,w=(e-p)*.1,(f-q)*.1,p,q 
---  circ(e,f,4)
---  flip()
--- end
-
 function redraw()
 	screen.clear()
 
 	local color=math.floor(util.linexp(-1,1,1,15.999,moomin.filter))
-	-- screen.level(1)
-	-- screen.circle(pos_x,pos_y+48,76+4)
-	-- screen.fill()
-	-- screen.level(0)
-	-- screen.circle(pos_x,pos_y+48,76)
-	-- screen.fill()
-
-	-- screen.level(1)
-	-- for i=1,3 do
-	-- 	local r=38+i
-	-- 	local x=pos_x
-	-- 	local y=pos_y+24
-	-- 	screen.arc(x,y,r,-1.3,-1.5)
-	-- 	screen.stroke()
-	-- 	screen.move(x,y)
-	-- 	screen.line(x+r*math.cos(-1.5),y+r*math.sin(-1.5))
-	-- 	screen.stroke()
-	-- 	screen.move(x,y)
-	-- 	screen.line(x+r*math.cos(-1.3),y+r*math.sin(-1.3))
-	-- 	screen.stroke()
-	-- end
 
 	local ps={}
 	local gy={}
@@ -187,6 +198,9 @@ function redraw()
 	screen.stroke()
 
 	screen.update()
+
+	-- TODO: send the distance between eyes as a modulation of the volume
+	-- TODO: send average eye X/Y position as modulation of ??/??
 end
 
 
