@@ -6,7 +6,11 @@
 --
 --
 --    ▼ instructions below ▼
-
+-- E2 modulates flanger
+-- E3 modulates lpf
+-- K2 generates chords
+-- K3 stops/starts chord
+--    sequencer
 
 engine.name="Synthy"
 articulation=include('synthy/lib/arm')
@@ -167,6 +171,8 @@ function init()
       end
     end
   end)
+
+  params:set("synthy_lpf",6000)
 end
 
 
