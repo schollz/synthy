@@ -4,8 +4,6 @@ a synth that's soft and on the verge of melancholy.
 
 ![image](https://user-images.githubusercontent.com/6550035/131072123-00275007-b08a-470a-85d5-a0cee8179c21.gif)
 
-https://vimeo.com/545281946
-
 synthy is a polyphonic synth composed of two saw-wave oscillators per note which are mildly chorused plus a pulse-wave sub-oscillator that responds with low-note priority as a monophonic bass.
 
 synthy's mnind is its own and obeys an internal stochastic rhythm. synthy may decide to shrink or grow and when it does, it causes the filter to close (when shrinking) or open (when growing). you can use K3 to manually take control, but after you stop turning K3 the synthy will revert to its own behavior after a certain time (available to change as a setting).
