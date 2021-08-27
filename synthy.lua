@@ -136,6 +136,7 @@ function init()
     -- data[2][..].n is name of note
     for i,d in ipairs(data[2]) do
       tab.print(d)
+      synthy.note_played=true
       engine.synthy_note_on(d.m,0.5)
     end
   end)
