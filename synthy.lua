@@ -19,7 +19,6 @@ chordy_=include("synthy/lib/chordsequencer")
 
 synthy={filter=0,amplitude=0,show_help=0,chord=nil,note_played=false}
 
-
 function init()
 
   -- setup midi listening
@@ -34,6 +33,12 @@ function init()
       local conn=midi.connect(dev.port)
       conn.event=function(data)
         local d=midi.to_msg(data)
+        -- visualize ccs
+        -- if d.cc~=nil and d.val~=nil then
+        --   if d.cc>0 and d.val>0 then
+        --     print("cc",d.cc,d.val)
+        --   end
+        -- end
         if dev.name~=midi_devices[params:get("synthy_midi_device")]
           and params:get("synthy_midi_device")>1 then
           do return end
@@ -49,10 +54,12 @@ function init()
           engine.synthy_note_off(d.note)
         elseif d.cc==64 then -- sustain pedal
           local val=d.val
-          if val>0 then
+          if val>126 then
             val=1
+          else
+            val=0
           end
-          if params:get("synthy_pedal")==1 then
+          if params:get("synthy_pedal_mode")==1 then
             engine.synthy_sustain(val)
           else
             engine.synthy_sustenuto(val)
@@ -106,7 +113,6 @@ function init()
   end)
   params:add_option("synthy_pedal_mode","pedal mode",{"sustain","sostenuto"},1)
 
-
   arms={}
   arms[1]=articulation:new()
   arms[1]:init(20,62,-1)
@@ -150,12 +156,11 @@ function init()
     synthy.chord=nil
   end)
 
-
   clock.run(function()
     clock.sleep(3)
-    if not synthy.note_played then 
+    if not synthy.note_played then
       synthy.show_help=120
-      synthy.note_played=true 
+      synthy.note_played=true
       clock.sleep(3)
       local new_chords=table.concat(fourchords:random_weighted()," ")
       print("synthy: generated new chords: "..new_chords)
@@ -176,7 +181,6 @@ function init()
   params:set("synthy_lpf",6000)
 end
 
-
 pos_x=30
 function enc(k,z)
   if k==2 then
@@ -189,13 +193,12 @@ function enc(k,z)
 
 end
 
-
 function key(k,z)
   if k==2 and z==1 then
     local new_chords=table.concat(fourchords:random_weighted()," ")
     print("synthy: generated new chords: "..new_chords)
     params:set("chordy_chords",new_chords)
-  elseif k==3 and z==1 then 
+  elseif k==3 and z==1 then
     params:delta("chordy_start",1)
   end
 end
@@ -281,7 +284,7 @@ function redraw()
   screen.line(base[2],62)
   screen.stroke()
 
-  if synthy.show_help > 0 then
+  if synthy.show_help>0 then
     screen.level(15)
     screen.rect(70,10,56,53)
     screen.fill()
@@ -299,7 +302,7 @@ function redraw()
     screen.move(74,18+8+8+8+8+8)
     screen.text("that?")
   end
-  if synthy.chord ~=nil then
+  if synthy.chord~=nil then
     screen.level(15)
     screen.rect(70,10,56,50)
     screen.fill()
@@ -320,7 +323,6 @@ function redraw()
   -- TODO: send average eye X/Y position as modulation of ??/??
 end
 
-
 function rerun()
   norns.script.load(norns.state.script)
 end
@@ -340,11 +342,10 @@ function calculate_lfo(period,offset)
   end
 end
 
-
 function unity(n)
   if n>0 then
     return 1
-  else 
-    return -1
+  else
+    return-1
   end
 end
