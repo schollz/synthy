@@ -10,7 +10,12 @@
 
 engine.name="Synthy"
 articulation=include('synthy/lib/arm')
-synthy={filter=0,amplitude=0,show_help=0}
+fourchords_=include("synthy/lib/fourchords")
+chordy_=include("synthy/lib/chordsequencer")
+
+synthy={filter=0,amplitude=0,show_help=0,chord=nil,note_played=false}
+
+
 function init()
 
   -- setup midi listening
@@ -34,6 +39,7 @@ function init()
           do return end
         end
         if d.type=="note_on" then
+          synthy.note_played=true
           engine.synthy_note_on(d.note,0.5+util.linlin(0,128,-0.25,0.25,d.vel))
         elseif d.type=="note_off" then
           engine.synthy_note_off(d.note)
@@ -86,7 +92,7 @@ function init()
   params:set_action("synthy_decay",function(x)
     engine.synthy_decay(x)
   end)
-  params:add_control("synthy_sustain","sustain",controlspec.new(0,1,'lin',0.1,0.9,'amp',0.1/1))
+  params:add_control("synthy_sustain","sustian",controlspec.new(0,1,'lin',0.1,0.9,'amp',0.1/1))
   params:set_action("synthy_sustain",function(x)
     engine.synthy_sustain(x)
   end)
@@ -112,13 +118,50 @@ function init()
     end
   end
 
+  -- initiate sequencer
+  fourchords=fourchords_:new({fname=_path.code.."synthy/lib/4chords_top1000.txt"})
+  chordy=chordy_:new()
+  chordy:chord_on(function(data)
+    print("synthy: playing "..data[1])
+    synthy.chord=data[1]
+    -- data[1] is chord name
+    -- data[2] is table of parameters
+    -- data[2][..].m is midi value
+    -- data[2][..].v is frequency
+    -- data[2][..].v is volts
+    -- data[2][..].n is name of note
+    for i,d in ipairs(data[2]) do
+      tab.print(d)
+      engine.synthy_note_on(d.m,0.5)
+    end
+  end)
+  chordy:chord_off(function(data)
+    print("synthy: stopping "..data[1])
+    for i,d in ipairs(data[2]) do
+      engine.synthy_note_off(d.m)
+    end
+  end)
+  chordy:on_stop(function()
+    synthy.chord=nil
+  end)
+
+
+  clock.run(function()
+    clock.sleep(3)
+    if not synthy.note_played then 
+      synthy.show_help=120
+      synthy.note_played=true 
+      clock.sleep(3)
+      local new_chords=table.concat(fourchords:random_weighted()," ")
+      print("synthy: generated new chords: "..new_chords)
+      params:set("chordy_chords",new_chords)
+      params:delta("chordy_start",1)
+    end
+  end)
   clock.run(function()
     while true do
       clock.sleep(1/15)
       redraw()
-      if math.random()<0.005 and synthy.amplitude < 0.001 then
-        synthy.show_help=120
-      end
       if synthy.show_help>0 then
         synthy.show_help=synthy.show_help-1
       end
@@ -139,6 +182,16 @@ function enc(k,z)
 
 end
 
+
+function key(k,z)
+  if k==2 and z==1 then
+    local new_chords=table.concat(fourchords:random_weighted()," ")
+    print("synthy: generated new chords: "..new_chords)
+    params:set("chordy_chords",new_chords)
+  elseif k==3 and z==1 then 
+    params:delta("chordy_start",1)
+  end
+end
 
 function redraw()
   screen.clear()
@@ -238,6 +291,16 @@ function redraw()
     screen.text("help with")
     screen.move(74,18+8+8+8+8+8)
     screen.text("that?")
+  end
+  if synthy.chord ~=nil then
+    screen.level(15)
+    screen.rect(70,10,56,50)
+    screen.fill()
+    screen.level(0)
+    screen.move(74+22,18+25)
+    screen.font_size(32)
+    screen.text_center(synthy.chord)
+    screen.font_size(8)
   end
 
   screen.update()
