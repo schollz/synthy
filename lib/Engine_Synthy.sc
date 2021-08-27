@@ -1,18 +1,18 @@
-// Engine_Moomin
-Engine_Moomin : CroneEngine {
-	// <moomin>
-	var moominParameters;
-	var moominVoices;
-	var moominVoicesOn;
-	var moominSynthFX;
-	var moominBusFx;
-	var moominOSFn;
+// Engine_Synthy
+Engine_Synthy : CroneEngine {
+	// <synthy>
+	var synthyParameters;
+	var synthyVoices;
+	var synthyVoicesOn;
+	var synthySynthFX;
+	var synthyBusFx;
+	var synthyOSFn;
 	var fnNoteOn, fnNoteOff;
 	var pedalSustainOn=false;
 	var pedalSostenutoOn=false;
 	var pedalSustainNotes;
 	var pedalSostenutoNotes;
-	// </moomin>
+	// </synthy>
 
 
 	*new { arg context, doneCallback;
@@ -21,16 +21,16 @@ Engine_Moomin : CroneEngine {
 
 	alloc {
 
-		// <moomin>
+		// <synthy>
 		// initialize variables
-		moominParameters=Dictionary.with(*["sub"->1.0,"attack"->1.0,"decay"->0.2,"sustain"->0.9,"release"->5.0,"portamento"->1.0]);
-		moominVoices=Dictionary.new;
-		moominVoicesOn=Dictionary.new;
+		synthyParameters=Dictionary.with(*["sub"->1.0,"attack"->1.0,"decay"->0.2,"sustain"->0.9,"release"->5.0,"portamento"->1.0]);
+		synthyVoices=Dictionary.new;
+		synthyVoicesOn=Dictionary.new;
 		pedalSustainNotes=Dictionary.new;
 		pedalSostenutoNotes=Dictionary.new;
 
 		// initialize synth defs
-		SynthDef("moominfx",{
+		SynthDef("synthyfx",{
 			arg in, out, reverb=0.02, hold_control=5.0, t_trig=0.0, lpf=8000,flang=0;
 			var snd,z,y,filterpos,filterswitch,flanger;
 			snd = In.ar(in,2);
@@ -66,7 +66,7 @@ Engine_Moomin : CroneEngine {
 			Out.ar(out,snd);
 		}).add;
 
-		SynthDef("moominosc",{
+		SynthDef("synthyosc",{
 			arg out=0,hz=220,amp=0.5,gate=1,sub=0,portamento=1,
 			attack=1.0,decay=0.2,sustain=0.9,release=5,
 			perturb1=0,t_trig1=0,perturb2=0,t_trig2=0;
@@ -90,17 +90,17 @@ Engine_Moomin : CroneEngine {
 			Out.ar(out,snd*env);
 		}).add;
 
-		moominOSFn = OSCFunc({ 
+		synthyOSFn = OSCFunc({ 
             arg msg, time; 
             // [time, msg].postln;
-            NetAddr("127.0.0.1", 10111).sendMsg("moomin",msg[2],msg[3]);
+            NetAddr("127.0.0.1", 10111).sendMsg("synthy",msg[2],msg[3]);
         },'/tr', context.server.addr);
 
 		// initialize fx synth and bus
 		context.server.sync;
-		moominBusFx = Bus.audio(context.server,2);
+		synthyBusFx = Bus.audio(context.server,2);
 		context.server.sync;
-		moominSynthFX = Synth.new("moominfx",[\out,0,\in,moominBusFx,\reverb,moominParameters.at("reverb")]);
+		synthySynthFX = Synth.new("synthyfx",[\out,0,\in,synthyBusFx,\reverb,synthyParameters.at("reverb")]);
 		context.server.sync;
 
 		// intialize helper functions
@@ -108,9 +108,9 @@ Engine_Moomin : CroneEngine {
 			arg note,amp;
 			var lowestNote=10000;
 			var sub=0;
-			("moomin_note_on "++note).postln;
+			("synthy_note_on "++note).postln;
 			// low-note priority for sub oscillator
-			moominVoicesOn.keysValuesDo({ arg key, syn;
+			synthyVoicesOn.keysValuesDo({ arg key, syn;
 				if (key<lowestNote,{
 					lowestNote=key;
 				});
@@ -118,7 +118,7 @@ Engine_Moomin : CroneEngine {
 			if (lowestNote<10000,{
 				if (note<lowestNote,{
 					sub=1;
-					moominVoices.at(lowestNote).set(\sub,0);
+					synthyVoices.at(lowestNote).set(\sub,0);
 				},{
 					sub=0;
 				});
@@ -127,29 +127,29 @@ Engine_Moomin : CroneEngine {
 			});
 
 			("sub = "++sub).postln;
-			moominVoices.put(note,
-				Synth.before(moominSynthFX,"moominosc",[
+			synthyVoices.put(note,
+				Synth.before(synthySynthFX,"synthyosc",[
 					\amp,amp,
-					\out,moominBusFx,
+					\out,synthyBusFx,
 					\hz,note.midicps,
-					\sub,sub*moominParameters.at("sub"),
-					\attack,moominParameters.at("attack"),
-					\decay,moominParameters.at("decay"),
-					\sustain,moominParameters.at("sustain"),
-					\release,moominParameters.at("release"),
-					\portamento,moominParameters.at("portamento"),
+					\sub,sub*synthyParameters.at("sub"),
+					\attack,synthyParameters.at("attack"),
+					\decay,synthyParameters.at("decay"),
+					\sustain,synthyParameters.at("sustain"),
+					\release,synthyParameters.at("release"),
+					\portamento,synthyParameters.at("portamento"),
 				]);
 			);
-			moominVoicesOn.put(note,1);
-			NodeWatcher.register(moominVoices.at(note));
+			synthyVoicesOn.put(note,1);
+			NodeWatcher.register(synthyVoices.at(note));
 		};
 		
 		fnNoteOff = {
 			arg note;
 			var lowestNote=10000;
-			("moomin_note_off "++note).postln;
+			("synthy_note_off "++note).postln;
 
-			moominVoicesOn.removeAt(note);
+			synthyVoicesOn.removeAt(note);
 
 			if (pedalSustainOn==true,{
 				pedalSustainNotes.put(note,1);
@@ -158,17 +158,17 @@ Engine_Moomin : CroneEngine {
 					// do nothing, it is a sostenuto note
 				},{
 					// remove the sound
-					moominVoices.at(note).set(\gate,0);
+					synthyVoices.at(note).set(\gate,0);
 					// swap sub
-					moominVoicesOn.keysValuesDo({ arg key, syn;
+					synthyVoicesOn.keysValuesDo({ arg key, syn;
 						if (key<lowestNote,{
 							lowestNote=key;
 						});
 					});
 					if (lowestNote<10000,{
 						("swapping sub to "++lowestNote).postln;
-						moominVoices.at(note).set(\sub,0);
-						moominVoices.at(lowestNote).set(\sub,moominParameters.at("sub"));
+						synthyVoices.at(note).set(\sub,0);
+						synthyVoices.at(lowestNote).set(\sub,synthyParameters.at("sub"));
 					});
 				});
 			});
@@ -179,39 +179,39 @@ Engine_Moomin : CroneEngine {
 
 
 		// add norns commands
-		this.addCommand("moomin_note_on", "if", { arg msg;
+		this.addCommand("synthy_note_on", "if", { arg msg;
 			var lowestNote=10000;
 			var note=msg[1];
-			if (moominVoices.at(note)!=nil,{
-				if (moominVoices.at(note).isRunning==true,{
-					("moomin_note_on retrigger "++note).postln;
-					moominVoices.at(note).set(\hz,msg[1].midicps,\amp,msg[2],\gate,0);
-					moominVoices.at(note).set(\gate,1);
-					moominVoicesOn.keysValuesDo({ arg key, syn;
+			if (synthyVoices.at(note)!=nil,{
+				if (synthyVoices.at(note).isRunning==true,{
+					("synthy_note_on retrigger "++note).postln;
+					synthyVoices.at(note).set(\hz,msg[1].midicps,\amp,msg[2],\gate,0);
+					synthyVoices.at(note).set(\gate,1);
+					synthyVoicesOn.keysValuesDo({ arg key, syn;
 						if (key<lowestNote,{
 							lowestNote=key;
 						});
 					});
 					if (note<lowestNote,{
 						("swapping sub to "++note).postln;
-						moominVoices.at(lowestNote).set(\sub,0);
-						moominVoices.at(note).set(\sub,moominParameters.at("sub"));
+						synthyVoices.at(lowestNote).set(\sub,0);
+						synthyVoices.at(note).set(\sub,synthyParameters.at("sub"));
 					});
-					moominVoicesOn.put(note,1);
+					synthyVoicesOn.put(note,1);
 				},{ fnNoteOn.(msg[1],msg[2]); });
 			},{  fnNoteOn.(msg[1],msg[2]); });
 		});	
 
-		this.addCommand("moomin_note_off", "i", { arg msg;
+		this.addCommand("synthy_note_off", "i", { arg msg;
 			var note=msg[1];
-			if (moominVoices.at(note)!=nil,{
-				if (moominVoices.at(note).isRunning==true,{
+			if (synthyVoices.at(note)!=nil,{
+				if (synthyVoices.at(note).isRunning==true,{
 					fnNoteOff.(note);
 				});
 			});
 		});
 
-		this.addCommand("moomin_sustain", "i", { arg msg;
+		this.addCommand("synthy_sustain", "i", { arg msg;
 			pedalSustainOn=(msg[1]==1);
 			if (pedalSustainOn==false,{
 				// release all sustained notes
@@ -222,7 +222,7 @@ Engine_Moomin : CroneEngine {
 			});
 		});
 
-		this.addCommand("moomin_sustenuto", "i", { arg msg;
+		this.addCommand("synthy_sustenuto", "i", { arg msg;
 			pedalSostenutoOn=(msg[1]==1);
 			if (pedalSostenutoOn==false,{
 				// release all sustained notes
@@ -232,91 +232,91 @@ Engine_Moomin : CroneEngine {
 				});
 			},{
 				// add currently held notes
-				moominVoicesOn.keysValuesDo({ arg note, val;
+				synthyVoicesOn.keysValuesDo({ arg note, val;
 					pedalSostenutoNotes.put(note,1);
 				});
 			});
 		});
 
-		this.addCommand("moomin_sub","f",{ arg msg;
-			moominParameters.put("sub",msg[1]);
+		this.addCommand("synthy_sub","f",{ arg msg;
+			synthyParameters.put("sub",msg[1]);
 		});
-		this.addCommand("moomin_attack","f",{ arg msg;
-			moominParameters.put("attack",msg[1]);
-			moominVoices.keysValuesDo({ arg note, syn;
+		this.addCommand("synthy_attack","f",{ arg msg;
+			synthyParameters.put("attack",msg[1]);
+			synthyVoices.keysValuesDo({ arg note, syn;
 				if (syn.isRunning==true,{
 					syn.set(\attack,msg[1]);
 				});
 			});
 		});
-		this.addCommand("moomin_decay","f",{ arg msg;
-			moominParameters.put("decay",msg[1]);
-			moominVoices.keysValuesDo({ arg note, syn;
+		this.addCommand("synthy_decay","f",{ arg msg;
+			synthyParameters.put("decay",msg[1]);
+			synthyVoices.keysValuesDo({ arg note, syn;
 				if (syn.isRunning==true,{
 					syn.set(\decay,msg[1]);
 				});
 			});
 		});
-		this.addCommand("moomin_sustain","f",{ arg msg;
-			moominParameters.put("sustain",msg[1]);
-			moominVoices.keysValuesDo({ arg note, syn;
+		this.addCommand("synthy_sustain","f",{ arg msg;
+			synthyParameters.put("sustain",msg[1]);
+			synthyVoices.keysValuesDo({ arg note, syn;
 				if (syn.isRunning==true,{
 					syn.set(\sustain,msg[1]);
 				});
 			});
 		});
-		this.addCommand("moomin_release","f",{ arg msg;
-			moominParameters.put("release",msg[1]);
-			moominVoices.keysValuesDo({ arg note, syn;
+		this.addCommand("synthy_release","f",{ arg msg;
+			synthyParameters.put("release",msg[1]);
+			synthyVoices.keysValuesDo({ arg note, syn;
 				if (syn.isRunning==true,{
 					syn.set(\release,msg[1]);
 				});
 			});
 		});
-		this.addCommand("moomin_portamento","f",{ arg msg;
-			moominParameters.put("portamento",msg[1]);
-			moominVoices.keysValuesDo({ arg note, syn;
+		this.addCommand("synthy_portamento","f",{ arg msg;
+			synthyParameters.put("portamento",msg[1]);
+			synthyVoices.keysValuesDo({ arg note, syn;
 				if (syn.isRunning==true,{
 					syn.set(\portamento,msg[1]);
 				});
 			});
 		});
-		this.addCommand("moomin_perturb1","f",{ arg msg;
-			moominVoices.keysValuesDo({ arg note, syn;
+		this.addCommand("synthy_perturb1","f",{ arg msg;
+			synthyVoices.keysValuesDo({ arg note, syn;
 				if (syn.isRunning==true,{
 					syn.set(\perturb1,msg[1],\t_trig1,1);
 				});
 			});
 		});
-		this.addCommand("moomin_perturb2","f",{ arg msg;
-			moominVoices.keysValuesDo({ arg note, syn;
+		this.addCommand("synthy_perturb2","f",{ arg msg;
+			synthyVoices.keysValuesDo({ arg note, syn;
 				if (syn.isRunning==true,{
 					syn.set(\perturb2,msg[1],\t_trig2,1);
 				});
 			});
 		});
-		this.addCommand("moomin_hold_control","f",{ arg msg;
-			moominSynthFX.set(\hold_control,msg[1]);
+		this.addCommand("synthy_hold_control","f",{ arg msg;
+			synthySynthFX.set(\hold_control,msg[1]);
 		});
-		this.addCommand("moomin_lpf","f",{ arg msg;
-			moominSynthFX.set(\lpf,msg[1],\t_trig,1);
+		this.addCommand("synthy_lpf","f",{ arg msg;
+			synthySynthFX.set(\lpf,msg[1],\t_trig,1);
 		});
-		this.addCommand("moomin_reverb","f",{ arg msg;
-			moominSynthFX.set(\reverb,msg[1]);
+		this.addCommand("synthy_reverb","f",{ arg msg;
+			synthySynthFX.set(\reverb,msg[1]);
 		});
-		this.addCommand("moomin_flanger","f",{ arg msg;
-			moominSynthFX.set(\flang,msg[1]);
+		this.addCommand("synthy_flanger","f",{ arg msg;
+			synthySynthFX.set(\flang,msg[1]);
 		});
 	
 
-		// </moomin>
+		// </synthy>
 	}
 
 	free {
-		// <moomin>
-		moominBusFx.free;
-		moominSynthFX.free;
-		moominVoices.keysValuesDo({ arg key, value; value.free; });
-		// </moomin>
+		// <synthy>
+		synthyBusFx.free;
+		synthySynthFX.free;
+		synthyVoices.keysValuesDo({ arg key, value; value.free; });
+		// </synthy>
 	}
 }
