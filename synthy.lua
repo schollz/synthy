@@ -312,7 +312,7 @@ function redraw()
   screen.update()
 
   local deviation_x=(ps[1][3][1]-ps[2][3][1]+32)/400*params:get("synthy_detuning") -- deviation around 0
-  local deviation_y=-1*math.abs(ps[1][3][2]-ps[2][3][2]+3)/10*params:get("synthy_tremelo")
+  local deviation_y=-1*math.abs(ps[1][3][2]-ps[2][3][2]+3)/10*params:get("synthy_tremolo")
   engine.synthy_perturb1(deviation_x)
   engine.synthy_perturb2(deviation_y)
   -- TODO: send the distance between eyes as a modulation of the volume
