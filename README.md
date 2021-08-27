@@ -10,9 +10,8 @@ moomin is a polyphonic synth composed of two saw-wave oscillators per note which
 
 moomin's mnind is its own and obeys an internal stochastic rhythm. moomin may decide to shrink or grow and when it does, it causes the filter to close (when shrinking) or open (when growing). you can use K3 to manually take control, but after you stop turning K3 the moomin will revert to its own behavior after a certain time (available to change as a setting).
 
-moomin's body is modeled as six revolute joints which are kinematically re-positioned when moving with K2 or K3. the x- and y- flucuations from the kinematics of the body movement modulate pitch and volume respectively. the degree of modulation is available to change in parameters.
+moomin's body is modeled as six revolute joints which are kinematically re-positioned when moving with K2 or K3. the x- and y- flucuations from the kinematics of the body movement do detuning and tremelo respectively. the degree of modulation is available to change in parameters ("squishy detuning" or "squishy tremelo").
  
-
 
 ## Requirements
 
@@ -27,7 +26,7 @@ moomin's body is modeled as six revolute joints which are kinematically re-posit
 install with 
 
 ```
-;install https://github.com/schollz/thirtythree
+;install https://github.com/schollz/moomin
 ```
 
 ## license

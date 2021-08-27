@@ -31,8 +31,8 @@ Engine_Moomin : CroneEngine {
 
 		// initialize synth defs
 		SynthDef("moominfx",{
-			arg in, out, reverb=0.02, hold_control=5.0, t_trig=0.0, lpf=8000;
-			var snd,z,y,filterpos,filterswitch;
+			arg in, out, reverb=0.02, hold_control=5.0, t_trig=0.0, lpf=8000,flang=0;
+			var snd,z,y,filterpos,filterswitch,flanger;
 			snd = In.ar(in,2);
 			// global filter
 			filterswitch=EnvGen.kr(Env.new([0,1,1,0],[0.5,hold_control,4]),gate:t_trig);
@@ -41,8 +41,16 @@ Engine_Moomin : CroneEngine {
 				lpf
 			]);
 			
+			// add flanger
+			flanger = snd+LocalIn.ar(2); //add some feedback
+			flanger= DelayN.ar(flanger,0.02,SinOsc.kr(0.1,0,0.005,0.005)); //max delay of 20msec
+			LocalOut.ar(0.5*flanger);
+			snd=SelectX.ar(flang,[snd,flanger]);
+
 			SendTrig.kr(Impulse.kr(5),1,filterpos);
 			snd=MoogLadder.ar(snd.tanh,filterpos);
+
+
 			
 			// reverb predelay time :
 			z = DelayN.ar(snd, 0.048);
@@ -78,7 +86,7 @@ Engine_Moomin : CroneEngine {
 				Pan2.ar(snd2,VarLag.kr(LFNoise0.kr(1/3),3,warp:\sine))/12*amp
 			}!2);
 			env=EnvGen.ar(Env.adsr(attack,decay,sustain,release),gate,doneAction:2);
-			env=env*(1+(perturb2val*LFPar.ar(SinOsc.kr(0.1).range(1,6)).range(-1,0)));
+			env=env*Clip.ar(1+(perturb2val*LFPar.ar(perturb2val*10).range(-1,0)));
 			Out.ar(out,snd*env);
 		}).add;
 
@@ -295,6 +303,9 @@ Engine_Moomin : CroneEngine {
 		});
 		this.addCommand("moomin_reverb","f",{ arg msg;
 			moominSynthFX.set(\reverb,msg[1]);
+		});
+		this.addCommand("moomin_flanger","f",{ arg msg;
+			moominSynthFX.set(\flang,msg[1]);
 		});
 	
 

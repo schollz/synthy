@@ -10,8 +10,7 @@
 
 engine.name="Moomin"
 articulation=include('moomin/lib/arm')
-moomin={filter=0,amplitude=0}
-
+moomin={filter=0,amplitude=0,show_help=0}
 function init()
 
   -- setup midi listening
@@ -53,9 +52,11 @@ function init()
     end
   end
 
-  params:add_group("MOOMIN",11)
+  params:add_group("MOOMIN",14)
   params:add_option("moomin_midi_device","midi device",midi_devices,1)
   params:add_option("moomin_midi_ch","midi channel",midi_channels,1)
+  params:add_control("moomin_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
+  params:add_control("moomin_tremelo","squishy tremelo",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
   params:add_control("moomin_sub","sub",controlspec.new(0,3,'lin',0.1,1.0,'amp',0.1/3))
   params:set_action("moomin_sub",function(x)
     engine.moomin_sub(x)
@@ -72,6 +73,10 @@ function init()
   params:add_control("moomin_reverb","reverb send",controlspec.new(0,100,'lin',1,2,'%',1/100))
   params:set_action("moomin_reverb",function(x)
     engine.moomin_reverb(x/100)
+  end)
+  params:add_control("moomin_flanger","flanger send",controlspec.new(0,100,'lin',1,2,'%',1/100))
+  params:set_action("moomin_flanger",function(x)
+    engine.moomin_flanger(x/100)
   end)
   params:add_control("moomin_attack","attack",controlspec.new(0.01,30,'lin',0.01,1.0,'s',0.01/30))
   params:set_action("moomin_attack",function(x)
@@ -111,6 +116,12 @@ function init()
     while true do
       clock.sleep(1/15)
       redraw()
+      if math.random()<0.001 then
+        moomin.show_help=120
+      end
+      if moomin.show_help>0 then
+        moomin.show_help=moomin.show_help-1
+      end
     end
   end)
 end
@@ -119,7 +130,8 @@ end
 pos_x=30
 function enc(k,z)
   if k==2 then
-    pos_x=pos_x+(z*2)
+    params:delta("moomin_flanger",unity(z))
+    pos_x=math.floor(util.linlin(0,100,30,128.9,params:get("moomin_flanger")))
   elseif k==3 then
     params:delta("moomin_lpf",unity(z))
     --pos_y=pos_y-z
@@ -209,10 +221,29 @@ function redraw()
   screen.line(base[2],62)
   screen.stroke()
 
+  if moomin.show_help > 0 then
+    screen.level(15)
+    screen.rect(70,10,56,53)
+    screen.fill()
+    screen.level(0)
+    screen.move(74,18)
+    screen.text("looks like")
+    screen.move(74,18+8)
+    screen.text("you're mak-")
+    screen.move(74,18+8+8)
+    screen.text("ing music.")
+    screen.move(74,18+8+8+8)
+    screen.text("need some")
+    screen.move(74,18+8+8+8+8)
+    screen.text("help with")
+    screen.move(74,18+8+8+8+8+8)
+    screen.text("that?")
+  end
+
   screen.update()
 
-  local deviation_x=(ps[1][3][1]-ps[2][3][1]+32)/400 -- deviation around 0
-  local deviation_y=-1*math.abs(ps[1][3][2]-ps[2][3][2]+3)/10
+  local deviation_x=(ps[1][3][1]-ps[2][3][1]+32)/400*params:get("moomin_detuning") -- deviation around 0
+  local deviation_y=-1*math.abs(ps[1][3][2]-ps[2][3][2]+3)/10*params:get("moomin_tremelo")
   engine.moomin_perturb1(deviation_x)
   engine.moomin_perturb2(deviation_y)
   -- TODO: send the distance between eyes as a modulation of the volume
