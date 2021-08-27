@@ -1,6 +1,6 @@
 ## synthy
 
-a synthesizer and friend.
+a synthesizer critter.
 
 ![image](https://user-images.githubusercontent.com/6550035/131072123-00275007-b08a-470a-85d5-a0cee8179c21.gif)
 
