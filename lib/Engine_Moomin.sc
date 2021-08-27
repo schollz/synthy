@@ -35,7 +35,7 @@ Engine_Moomin : CroneEngine {
 			var snd,z,y,filterpos,filterswitch;
 			snd = In.ar(in,2);
 			// global filter
-			filterswitch=EnvGen.kr(Env.new([0,1,1,0],[0.5,hold_control,0.5]),gate:t_trig);
+			filterswitch=EnvGen.kr(Env.new([0,1,1,0],[2,hold_control,2]),gate:t_trig);
 			filterpos=SelectX.kr(filterswitch,[
 				LinExp.kr(VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine),-1,1,3200,8000),
 				lpf
@@ -61,13 +61,13 @@ Engine_Moomin : CroneEngine {
 		SynthDef("moominosc",{
 			arg out=0,hz=220,amp=0.5,gate=1,sub=0,portamento=1,
 			attack=1.0,decay=0.2,sustain=0.9,release=5,
-			perturb1=0,t_trig1=0;
+			perturb1=0,t_trig1=0,perturb2=0,t_trig2=0;
 			var snd,note,env;
-			var perturb1val;
-			perturb1val=EnvGen.kr(Env.perc(1/30,1/30,Latch.kr(perturb1,t_trig1)),t_trig1);
-			perturb1val=VagLag.kr(perturb1val,0.1,warp:\sine); // will accept pertubations, but trend towards 0
+			var perturb1val,perturb2val;
 			note=Lag.kr(hz,portamento).cpsmidi;
-			note=note+(note*perturb1val);
+			perturb1val=VarLag.kr(EnvGen.kr(Env.perc(1/30,1/30,Latch.kr(perturb1,t_trig1)),t_trig1),0.1,warp:\sine);
+			perturb2val=VarLag.kr(EnvGen.kr(Env.perc(1/30,1/30,Latch.kr(perturb2,t_trig2)),t_trig2),0.1,warp:\sine);
+			note=note+(note*perturb1val.poll);
 			sub=Lag.kr(sub,1);
 			snd=Pan2.ar(Pulse.ar((note-12).midicps,LinLin.kr(LFTri.kr(0.5),-1,1,0.2,0.8))/12*amp*sub);
 			snd=snd+Mix.ar({
@@ -78,7 +78,7 @@ Engine_Moomin : CroneEngine {
 				Pan2.ar(snd2,VarLag.kr(LFNoise0.kr(1/3),3,warp:\sine))/12*amp
 			}!2);
 			env=EnvGen.ar(Env.adsr(attack,decay,sustain,release),gate,doneAction:2);
-			Out.ar(out,snd*env);
+			Out.ar(out,snd*Clip.ar(env+perturb2val,0,2));
 		}).add;
 
 		moominOSFn = OSCFunc({ 
@@ -231,50 +231,66 @@ Engine_Moomin : CroneEngine {
 
 		this.addCommand("moomin_sub","f",{ arg msg;
 			moominParameters.put("sub",msg[1]);
-			moominVoices.keysValuesDo({ arg note, syn;
-				syn.set(\sub,msg[1]);
-			});
 		});
 		this.addCommand("moomin_attack","f",{ arg msg;
 			moominParameters.put("attack",msg[1]);
 			moominVoices.keysValuesDo({ arg note, syn;
-				syn.set(\attack,msg[1]);
+				if (syn.isRunning==true,{
+					syn.set(\attack,msg[1]);
+				});
 			});
 		});
 		this.addCommand("moomin_decay","f",{ arg msg;
 			moominParameters.put("decay",msg[1]);
 			moominVoices.keysValuesDo({ arg note, syn;
-				syn.set(\decay,msg[1]);
+				if (syn.isRunning==true,{
+					syn.set(\decay,msg[1]);
+				});
 			});
 		});
 		this.addCommand("moomin_sustain","f",{ arg msg;
 			moominParameters.put("sustain",msg[1]);
 			moominVoices.keysValuesDo({ arg note, syn;
-				syn.set(\sustain,msg[1]);
+				if (syn.isRunning==true,{
+					syn.set(\sustain,msg[1]);
+				});
 			});
 		});
 		this.addCommand("moomin_release","f",{ arg msg;
 			moominParameters.put("release",msg[1]);
 			moominVoices.keysValuesDo({ arg note, syn;
-				syn.set(\release,msg[1]);
+				if (syn.isRunning==true,{
+					syn.set(\release,msg[1]);
+				});
 			});
 		});
 		this.addCommand("moomin_portamento","f",{ arg msg;
 			moominParameters.put("portamento",msg[1]);
 			moominVoices.keysValuesDo({ arg note, syn;
-				syn.set(\portamento,msg[1]);
+				if (syn.isRunning==true,{
+					syn.set(\portamento,msg[1]);
+				});
 			});
 		});
 		this.addCommand("moomin_perturb1","f",{ arg msg;
 			moominVoices.keysValuesDo({ arg note, syn;
-				syn.set(\perturb1,msg[1],\t_trig1,1);
+				if (syn.isRunning==true,{
+					syn.set(\perturb1,msg[1],\t_trig1,1);
+				});
+			});
+		});
+		this.addCommand("moomin_perturb2","f",{ arg msg;
+			moominVoices.keysValuesDo({ arg note, syn;
+				if (syn.isRunning==true,{
+					syn.set(\perturb2,msg[1],\t_trig2,1);
+				});
 			});
 		});
 		this.addCommand("moomin_hold_control","f",{ arg msg;
-                        moominSynthFX.set(\hold_control,msg[1]);
+			moominSynthFX.set(\hold_control,msg[1]);
 		});
 		this.addCommand("moomin_lpf","f",{ arg msg;
-                        moominSynthFX.set(\lpf,msg[1],\t_trig,1);
+			moominSynthFX.set(\lpf,msg[1],\t_trig,1);
 		});
 		this.addCommand("moomin_reverb","f",{ arg msg;
 			moominSynthFX.set(\reverb,msg[1]);
