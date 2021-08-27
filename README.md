@@ -16,13 +16,13 @@ also, if you don't play any notes, synthy will try to help you out. synthy knows
 
 ## Todo
 
-- jf/crow output from chord sequencer
+- midi/jf/crow output from chord sequencer
 - what does E1 do?
 
 ## Requirements
 
 - norns
-- any midi controller
+- any midi controller (optional)
 
 ## Documentation
 
