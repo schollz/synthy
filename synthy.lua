@@ -52,7 +52,7 @@ function init()
     end
   end
 
-  params:add_group("MOOMIN",14)
+  params:add_group("SYNTHY",14)
   params:add_option("synthy_midi_device","midi device",midi_devices,1)
   params:add_option("synthy_midi_ch","midi channel",midi_channels,1)
   params:add_control("synthy_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
