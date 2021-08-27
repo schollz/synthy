@@ -35,7 +35,7 @@ Engine_Moomin : CroneEngine {
 			var snd,z,y,filterpos,filterswitch;
 			snd = In.ar(in,2);
 			// global filter
-			filterswitch=EnvGen.kr(Env.new([0,1,1,0],[2,hold_control,2]),gate:t_trig);
+			filterswitch=EnvGen.kr(Env.new([0,1,1,0],[0.5,hold_control,4]),gate:t_trig);
 			filterpos=SelectX.kr(filterswitch,[
 				LinExp.kr(VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine),-1,1,3200,8000),
 				lpf
@@ -66,8 +66,8 @@ Engine_Moomin : CroneEngine {
 			var perturb1val,perturb2val;
 			note=Lag.kr(hz,portamento).cpsmidi;
 			perturb1val=VarLag.kr(EnvGen.kr(Env.perc(1/30,1/30,Latch.kr(perturb1,t_trig1)),t_trig1),0.1,warp:\sine);
-			perturb2val=VarLag.kr(EnvGen.kr(Env.perc(1/30,1/30,Latch.kr(perturb2,t_trig2)),t_trig2),0.1,warp:\sine);
-			note=note+(note*perturb1val.poll);
+			perturb2val=VarLag.kr(EnvGen.kr(Env.perc(1/30,1/30,Latch.kr(perturb2,t_trig2)),t_trig2),0.1,warp:\sine).abs;
+			note=note+(note*perturb1val);
 			sub=Lag.kr(sub,1);
 			snd=Pan2.ar(Pulse.ar((note-12).midicps,LinLin.kr(LFTri.kr(0.5),-1,1,0.2,0.8))/12*amp*sub);
 			snd=snd+Mix.ar({
@@ -78,7 +78,8 @@ Engine_Moomin : CroneEngine {
 				Pan2.ar(snd2,VarLag.kr(LFNoise0.kr(1/3),3,warp:\sine))/12*amp
 			}!2);
 			env=EnvGen.ar(Env.adsr(attack,decay,sustain,release),gate,doneAction:2);
-			Out.ar(out,snd*Clip.ar(env+perturb2val,0,2));
+			env=env*(1+(perturb2val*LFPar.ar(SinOsc.kr(0.1).range(1,6)).range(-1,0)));
+			Out.ar(out,snd*env);
 		}).add;
 
 		moominOSFn = OSCFunc({ 

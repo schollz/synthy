@@ -127,6 +127,7 @@ function enc(k,z)
 
 end
 
+
 function redraw()
   screen.clear()
 
