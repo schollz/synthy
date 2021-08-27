@@ -16,6 +16,7 @@ local function file_exists(file)
 end
 
 function FourChords:init(fname)
+  print("loading chords from "..fname)
   math.randomseed( os.time() )
   self.prob_total=0
   self.chords={}
