@@ -25,6 +25,7 @@ function ChordSequencer:init()
   params:add_text("chordy_chords","chords","C Am F G") 
   params:add_number("chordy_beats_per_chord","beats per chord",1,64,4)
   params:add_number("chordy_octave","octave",1,8,3)
+  --params:add_number("chordy_transpose","transpose",-12,12,0)
 
   -- start lattice
   self.sequencer=lattice:new{
