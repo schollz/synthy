@@ -27,7 +27,7 @@ function init()
   for i=1,16 do
     table.insert(midi_channels,i)
   end
-  for _,dev in ipairs(midi.devices) do
+  for _,dev in pairs(midi.devices) do
     if dev.port~=nil then
       table.insert(midi_devices,dev.name)
       local conn=midi.connect(dev.port)
