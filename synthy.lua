@@ -59,7 +59,7 @@ function init()
   for i=1,16 do
     table.insert(midi_channels,i)
   end
-  for _,dev in ipairs(midi.devices) do
+  for _,dev in pairs(midi.devices) do
     if dev.port~=nil then
       table.insert(midi_devices,dev.name)
       local conn=midi.connect(dev.port)
@@ -100,7 +100,7 @@ function init()
     end
   end
 
-  params:add_group("SYNTHY",16)
+  params:add_group("SYNTHY",17)
   params:add_option("synthy_midi_device","midi device",midi_devices,1)
   params:add_option("synthy_midi_ch","midi channel",midi_channels,1)
   params:add_control("synthy_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
@@ -144,6 +144,7 @@ function init()
     engine.synthy_release(x)
   end)
   params:add_option("synthy_pedal_mode","pedal mode",{"sustain","sostenuto"},1)
+  params:add_option("synthy_groove","groove",{"no","yes"},1)
   params:add_option("synthy_crow","crow output",{"no","yes"},1)
   params:add_option("synthy_jf","jf output",{"no","yes"},1)
   params:set_action("synthy_jf",function(x)
@@ -216,10 +217,12 @@ function init()
     end
   end)
 
+
+  pos_x=30
   params:set("synthy_lpf",6000)
 end
 
-pos_x=30
+
 function enc(k,z)
   if k==2 then
     params:delta("synthy_flanger",unity(z))
@@ -243,10 +246,13 @@ end
 
 function redraw()
   screen.clear()
-
+  if params:get("synthy_groove")==2 then
+    pos_x=util.linlin(-1,1,30,80,calculate_lfo(clock.get_beat_sec()*8,0))
+  end
   local color=math.floor(util.linexp(-1,1,1,15.999,synthy.filter))
-  local pos_y=math.floor(util.clamp(util.linlin(math.log(25),math.log(16000),90,1,math.log(synthy.filter)),10,128))
-
+  -- local pos_y=math.floor(129-util.clamp(util.linlin(math.log(50),math.log(20000),1,150,math.log(synthy.filter)),1,128))
+  local pos_y=math.floor(util.clamp(util.linlin(math.log(125),math.log(16000),90,1,math.log(synthy.filter)),10,128))
+  
   local ps={}
   local gy={}
   local base={}
