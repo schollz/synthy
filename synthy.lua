@@ -1,4 +1,4 @@
--- synthy v0.1.1
+-- synthy v0.2.0
 -- soft, melancholic synth
 --
 -- llllllll.co/t/synthy
@@ -17,7 +17,39 @@ articulation=include('synthy/lib/arm')
 fourchords_=include("synthy/lib/fourchords")
 chordy_=include("synthy/lib/chordsequencer")
 
-synthy={filter=0,amplitude=0,show_help=0,chord=nil,note_played=false}
+synthy={filter=0,amplitude=0,show_help=0,chord=nil,note_played=false,notes={}}
+
+function note_on(note,velocity)
+  synthy.note_played=true
+  synthy.notes[note]=true
+  local notes={}
+  for note,v in pairs(synthy.notes) do
+    table.insert(notes,note)
+  end
+  table.sort(notes)
+
+  if params:get("synthy_crow")==2 then
+    for i,note in ipairs(notes) do
+      if i<=4 then
+        crow.output[i].volts=(note-60)/12
+      end
+    end
+  end
+  if params:get("synthy_jf")==2 then
+    for i,note in ipairs(notes) do
+      if i<=4 then
+        crow.ii.jf.play_voice(i,(note-60)/12,util.linlin(0,1.0,0,10,velocity))
+      end
+    end
+  end
+
+  engine.synthy_note_on(note,velocity)
+end
+
+function note_off(note)
+  synthy.notes[note]=false
+  engine.synthy_note_off(note)
+end
 
 function init()
 
@@ -48,8 +80,7 @@ function init()
           do return end
         end
         if d.type=="note_on" then
-          synthy.note_played=true
-          engine.synthy_note_on(d.note,0.5+util.linlin(0,128,-0.25,0.25,d.vel))
+          note_on(d.note,0.5+util.linlin(0,128,-0.25,0.25,d.vel))
         elseif d.type=="note_off" then
           engine.synthy_note_off(d.note)
         elseif d.cc==64 then -- sustain pedal
@@ -69,7 +100,7 @@ function init()
     end
   end
 
-  params:add_group("SYNTHY",15)
+  params:add_group("SYNTHY",17)
   params:add_option("synthy_midi_device","midi device",midi_devices,1)
   params:add_option("synthy_midi_ch","midi channel",midi_channels,1)
   params:add_control("synthy_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
@@ -114,6 +145,13 @@ function init()
   end)
   params:add_option("synthy_pedal_mode","pedal mode",{"sustain","sostenuto"},1)
   params:add_option("synthy_groove","groove",{"no","yes"},1)
+  params:add_option("synthy_crow","crow output",{"no","yes"},1)
+  params:add_option("synthy_jf","jf output",{"no","yes"},1)
+  params:set_action("synthy_jf",function(x)
+    if x==2 then
+      crow.ii.jf.mode(1)
+    end
+  end)
 
   arms={}
   arms[1]=articulation:new()
@@ -144,14 +182,13 @@ function init()
     -- data[2][..].n is name of note
     for i,d in ipairs(data[2]) do
       tab.print(d)
-      synthy.note_played=true
-      engine.synthy_note_on(d.m,0.5)
+      note_on(d.m,0.5)
     end
   end)
   chordy:chord_off(function(data)
     print("synthy: stopping "..data[1])
     for i,d in ipairs(data[2]) do
-      engine.synthy_note_off(d.m)
+      note_off(d.m)
     end
   end)
   chordy:on_stop(function()

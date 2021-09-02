@@ -560,6 +560,54 @@ function music.chord_to_midi(c,midi_near)
   return p
 end
 
+function music.transpose_chord(c,semitones)
+  local notes_scale_sharp={"C","C#","D","D#","E","F","F#","G","G#","A","A#","B","C","C#","D","D#","E","F","F#","G","G#","A","A#","B","C","C#","D","D#","E","F","F#","G","G#","A","A#","B"}
+  local notes_scale_flat={"C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"}
+  local longest=""
+  local c2=c
+  for i,n in ipairs(notes_scale_flat) do
+    if i>11 and #n>#longest then
+      if c:find(n)==1 then
+        longest=n
+        c2=notes_scale_flat[i+semitones]..c:sub(#n+1)
+      end
+    end
+  end
+  for i,n in ipairs(notes_scale_sharp) do
+    if i>11 and #n>#longest then
+      if c:find(n)==1 then
+        longest=n
+        c2=notes_scale_sharp[i+semitones]..c:sub(#n+1)
+      end
+    end
+  end
+  local c3=c2
+  if c2:find("/") then
+    local parts=string.split(c2,"/")
+    c=parts[2]
+    local longest=""
+    local c2=c
+    for i,n in ipairs(notes_scale_flat) do
+      if i>11 and #n>#longest then
+        if c:find(n)==1 then
+          longest=n
+          c2=notes_scale_flat[i+semitones]..c:sub(#n+1)
+        end
+      end
+    end
+    for i,n in ipairs(notes_scale_sharp) do
+      if i>11 and #n>#longest then
+        if c:find(n)==1 then
+          longest=n
+          c2=notes_scale_sharp[i+semitones]..c:sub(#n+1)
+        end
+      end
+    end
+    c3=parts[1].."/"..c2
+  end
+  return c3
+end
+
 
 -- debug=true
 -- for i,v in ipairs(music.chord_to_midi("Am/E:4")) do
@@ -569,3 +617,4 @@ end
 -- end
 
 return music
+

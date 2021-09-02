@@ -12,20 +12,38 @@ function ChordSequencer:new(o)
 end
 
 function ChordSequencer:init()
-  params:add_group("CHORDY",4)
+  params:add_group("CHORDY",6)
   params:add{type='binary',name="start/stop",id='chordy_start',behavior='toggle',
     action=function(v)
-      if v==1 then 
+      if v==1 then
         self:start()
       else
         self:stop()
       end
     end
   }
-  params:add_text("chordy_chords","chords","C Am F G") 
+  params:add_text("chordy_chords_show","chords","C Am F G")
+  params:add_text("chordy_chords","chords show","C Am F G")
+  params:hide("chordy_chords")
+  params:set_action("chordy_chords",function(x)
+    -- apply any transposition
+    local chords={}
+    for v in x:gmatch("%S+") do
+      table.insert(chords,music.transpose_chord(v,params:get("chordy_transpose")))
+    end
+    params:set("chordy_chords_show",table.concat(chords," "))
+  end)
   params:add_number("chordy_beats_per_chord","beats per chord",1,64,4)
   params:add_number("chordy_octave","octave",1,8,3)
-  --params:add_number("chordy_transpose","transpose",-12,12,0)
+  params:add_number("chordy_transpose","transpose",-11,11,0)
+  params:set_action("chordy_transpose",function(x)
+    local xx=params:get("chordy_chords")
+    local chords={}
+    for v in xx:gmatch("%S+") do
+      table.insert(chords,music.transpose_chord(v,x))
+    end
+    params:set("chordy_chords_show",table.concat(chords," "))
+  end)
 
   -- start lattice
   self.sequencer=lattice:new{
@@ -40,16 +58,16 @@ function ChordSequencer:init()
 end
 
 function ChordSequencer:start()
-  local chord_text=params:get("chordy_chords")
-  if chord_text=="" then 
+  local chord_text=params:get("chordy_chords_show")
+  if chord_text=="" then
     print("no chords to play")
     do return end
   end
-  self.chords = {}
+  self.chords={}
   for chord in chord_text:gmatch("%S+") do
     local data=music.chord_to_midi(chord..":"..params:get("chordy_octave"))
     if data~=nil then
-      table.insert(self.chords, {chord,data})
+      table.insert(self.chords,{chord,data})
       print("chordsequencer: added "..chord)
     end
   end
@@ -73,17 +91,17 @@ function ChordSequencer:stop()
 end
 
 function ChordSequencer:step(t)
-  self.beat = self.beat + 1
+  self.beat=self.beat+1
   print(self.beat)
-  if self.beat % params:get("chordy_beats_per_chord")==0 then
-    self.measure = self.measure + 1
+  if self.beat%params:get("chordy_beats_per_chord")==0 then
+    self.measure=self.measure+1
     self.chord_current=self.chords[self.measure%#self.chords+1]
     print("chordsequencer: playing "..self.chord_current[1])
     if self.fn_note_on~=nil then
       self.fn_note_on(self.chord_current)
     end
   end
-  if self.beat % params:get("chordy_beats_per_chord")==params:get("chordy_beats_per_chord")-1 then
+  if self.beat%params:get("chordy_beats_per_chord")==params:get("chordy_beats_per_chord")-1 then
     print("chordsequencer: stopping "..self.chord_current[1])
     if self.fn_note_off~=nil then
       self.fn_note_off(self.chord_current)
