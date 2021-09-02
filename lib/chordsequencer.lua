@@ -23,13 +23,13 @@ function ChordSequencer:init()
     end
   }
   params:add_text("chordy_chords_show","chords","C Am F G")
-  params:add_text("chordy_chords","chords","C Am F G")
+  params:add_text("chordy_chords","chords show","C Am F G")
   params:hide("chordy_chords")
   params:set_action("chordy_chords",function(x)
     -- apply any transposition
     local chords={}
     for v in x:gmatch("%S+") do
-      table.insert(chords,music.transpose_chord(x,params:get("chordy_transpose")))
+      table.insert(chords,music.transpose_chord(v,params:get("chordy_transpose")))
     end
     params:set("chordy_chords_show",table.concat(chords," "))
   end)
@@ -37,8 +37,12 @@ function ChordSequencer:init()
   params:add_number("chordy_octave","octave",1,8,3)
   params:add_number("chordy_transpose","transpose",-11,11,0)
   params:set_action("chordy_transpose",function(x)
-    local c=params:get("chordy_chords")
-    params:set("chordy_chords",c) -- bang the chords
+    local xx=params:get("chordy_chords")
+    local chords={}
+    for v in xx:gmatch("%S+") do
+      table.insert(chords,music.transpose_chord(v,x))
+    end
+    params:set("chordy_chords_show",table.concat(chords," "))
   end)
 
   -- start lattice
@@ -54,7 +58,7 @@ function ChordSequencer:init()
 end
 
 function ChordSequencer:start()
-  local chord_text=params:get("chordy_chords")
+  local chord_text=params:get("chordy_chords_show")
   if chord_text=="" then
     print("no chords to play")
     do return end
