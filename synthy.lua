@@ -1,4 +1,4 @@
--- synthy v0.1.1
+-- synthy v0.2.0
 -- soft, melancholic synth
 --
 -- llllllll.co/t/synthy
