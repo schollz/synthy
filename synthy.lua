@@ -38,7 +38,7 @@ function note_on(note,velocity)
   if params:get("synthy_jf")==2 then
     for i,note in ipairs(notes) do
       if i<=4 then
-        crow.ii.jf.play_voice(i,note-60/12,velocity)
+        crow.ii.jf.play_voice(i,(note-60)/12,util.linlin(0,1.0,0,10,velocity))
       end
     end
   end
