@@ -100,7 +100,7 @@ function init()
     end
   end
 
-  params:add_group("SYNTHY",17)
+  params:add_group("SYNTHY",18)
   params:add_option("synthy_midi_device","midi device",midi_devices,1)
   params:add_option("synthy_midi_ch","midi channel",midi_channels,1)
   params:add_control("synthy_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
@@ -167,10 +167,10 @@ function init()
   synthy.filter=0
   gyro_juice = 1.5
   osc.event=function(path,args,from)
-    local gyro_juice = params:get("synthy_gyro_juice")
     -- from touchOSC mark I (the free one):
     -- https://hexler.net/touchosc-mk1/manual/configuration-options
     if path=="/accxyz" then
+      local gyro_juice = params:get("synthy_gyro_juice")
       -- this can be VERY noisy
       --print("pos: "..pos_x..", "..pos_y..", juice:"..gyro_juice..", acc:"..args[1]..", "..args[2]..", "..args[3])
       inc_pos_x((args[1] * gyro_juice) ^ 3)
