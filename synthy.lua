@@ -171,8 +171,6 @@ function init()
     -- https://hexler.net/touchosc-mk1/manual/configuration-options
     if path=="/accxyz" then
       local gyro_juice = params:get("synthy_gyro_juice")
-      -- this can be VERY noisy
-      --print("pos: "..pos_x..", "..pos_y..", juice:"..gyro_juice..", acc:"..args[1]..", "..args[2]..", "..args[3])
       inc_pos_x((args[1] * gyro_juice) ^ 3)
       inc_lpf((args[2] * gyro_juice) ^ 3)
     end
