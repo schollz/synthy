@@ -32,11 +32,11 @@ Engine_Synthy : CroneEngine {
 		// initialize synth defs
 		SynthDef("synthyfx",{
 			arg in, out, reverb=0.02, hold_control=5.0, t_trig=0.0,
-        lpf=8000,flang=0,lpf_lag=0.2;
+				lpf=8000,flang=0,lpf_lag=0.2;
 			var snd,z,y,filterpos,filterswitch,flanger;
 			snd = In.ar(in,2);
 			// global filter
-      lpf = lpf.lag(lpf_lag);
+			lpf = lpf.lag(lpf_lag);
 			filterswitch=EnvGen.kr(Env.new([0,1,1,0],[0.5,hold_control,4]),gate:t_trig);
 			filterpos=SelectX.kr(filterswitch,[
 				LinExp.kr(VarLag.kr(LFNoise0.kr(1/6),6,warp:\sine),-1,1,3200,8000),
