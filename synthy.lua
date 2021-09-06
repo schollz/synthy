@@ -153,7 +153,7 @@ function init()
     end
   end)
   params:add_control("synthy_gyro_juice","gyro juice", 
-    controlspec.new(0.1,5,'lin',0.1,2, "tsp", 0.1))
+    controlspec.new(0.1,8,'lin',0.1,2,"tsp",0.1/8))
   params:set_action("synthy_gyro_juice", function (x) 
     engine.synthy_gyro_juice(x)
   end)
