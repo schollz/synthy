@@ -100,7 +100,7 @@ function init()
     end
   end
 
-  params:add_group("SYNTHY",17)
+  params:add_group("SYNTHY",18)
   params:add_option("synthy_midi_device","midi device",midi_devices,1)
   params:add_option("synthy_midi_ch","midi channel",midi_channels,1)
   params:add_control("synthy_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
@@ -152,6 +152,11 @@ function init()
       crow.ii.jf.mode(1)
     end
   end)
+  params:add_control("synthy_gyro_juice","gyro juice", 
+    controlspec.new(0.1,8,'lin',0.1,2,"tsp",0.1/8))
+  params:set_action("synthy_gyro_juice", function (x) 
+    engine.synthy_gyro_juice(x)
+  end)
 
   arms={}
   arms[1]=articulation:new()
@@ -160,7 +165,15 @@ function init()
   arms[2]:init(128-20,62,1)
 
   synthy.filter=0
+  gyro_juice = 1.5
   osc.event=function(path,args,from)
+    -- from touchOSC mark I (the free one):
+    -- https://hexler.net/touchosc-mk1/manual/configuration-options
+    if path=="/accxyz" then
+      local gyro_juice = params:get("synthy_gyro_juice")
+      inc_pos_x((args[1] * gyro_juice) ^ 3)
+      inc_lpf((args[2] * gyro_juice) ^ 3)
+    end
     if args[1]==1 then
       synthy.filter=tonumber(args[2])
     elseif args[1]==2 then
@@ -222,13 +235,20 @@ function init()
   params:set("synthy_lpf",6000)
 end
 
+function inc_pos_x(inc)
+  params:delta("synthy_flanger", inc)
+  pos_x=math.floor(util.linlin(0,100,30,128.9,params:get("synthy_flanger")))
+end
+
+function inc_lpf(inc)
+  params:delta("synthy_lpf", inc)
+end
 
 function enc(k,z)
   if k==2 then
-    params:delta("synthy_flanger",unity(z))
-    pos_x=math.floor(util.linlin(0,100,30,128.9,params:get("synthy_flanger")))
+    inc_pos_x(unity(z))
   elseif k==3 then
-    params:delta("synthy_lpf",unity(z))
+    inc_lpf(unity(z))
     --pos_y=pos_y-z
   end
 
