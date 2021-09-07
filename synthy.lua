@@ -171,8 +171,8 @@ function init()
     -- https://hexler.net/touchosc-mk1/manual/configuration-options
     if path=="/accxyz" then
       local gyro_juice = params:get("synthy_gyro_juice")
-      inc_pos_x((args[1] * gyro_juice) ^ 3)
-      inc_lpf((args[2] * gyro_juice) ^ 3)
+      inc_pos_x(util.clamp((args[1] * gyro_juice) ^ 3,-2,2))
+      inc_lpf(util.clamp((args[2] * gyro_juice) ^ 3,-0.5,0.5))
     end
     if args[1]==1 then
       synthy.filter=tonumber(args[2])
