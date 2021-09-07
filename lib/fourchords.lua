@@ -49,8 +49,8 @@ function FourChords:random_weighted()
   end
 end
 
-function FourChords:random_uniform()
-  local v=self.chords[math.random(#self.chords)]
+function FourChords:random_unpopular()
+  local v=self.chords[math.random(#self.chords-100)+100]
   return {v[2],v[3],v[4],v[5]}
 end
 

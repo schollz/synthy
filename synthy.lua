@@ -100,7 +100,7 @@ function init()
     end
   end
 
-  params:add_group("SYNTHY",18)
+  params:add_group("SYNTHY",19)
   params:add_option("synthy_midi_device","midi device",midi_devices,1)
   params:add_option("synthy_midi_ch","midi channel",midi_channels,1)
   params:add_control("synthy_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
@@ -157,6 +157,7 @@ function init()
   params:set_action("synthy_gyro_juice", function (x) 
     engine.synthy_gyro_juice(x)
   end)
+  params:add_option("synthy_chord_selection","chord randomness",{"popular","unpopular"},1)
 
   arms={}
   arms[1]=articulation:new()
@@ -215,6 +216,10 @@ function init()
       synthy.note_played=true
       clock.sleep(3)
       local new_chords=table.concat(fourchords:random_weighted()," ")
+      if params:get("synthy_chord_selection")==2 then 
+	print("synthy: getting unpopular chords")
+	new_chords=table.concat(fourchords:random_unpopular()," ")
+      end
       print("synthy: generated new chords: "..new_chords)
       params:set("chordy_chords",new_chords)
       params:delta("chordy_start",1)
@@ -257,6 +262,10 @@ end
 function key(k,z)
   if k==2 and z==1 then
     local new_chords=table.concat(fourchords:random_weighted()," ")
+    if params:get("synthy_chord_selection")==2 then 
+      print("synthy: getting unpopular chords")
+      new_chords=table.concat(fourchords:random_unpopular()," ")
+    end
     print("synthy: generated new chords: "..new_chords)
     params:set("chordy_chords",new_chords)
   elseif k==3 and z==1 then
