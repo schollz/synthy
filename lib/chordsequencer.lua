@@ -31,6 +31,7 @@ function ChordSequencer:init()
     for v in x:gmatch("%S+") do
       table.insert(chords,music.transpose_chord(v,params:get("chordy_transpose")))
     end
+    self:update_chords()
     params:set("chordy_chords_show",table.concat(chords," "))
   end)
   params:add_number("chordy_beats_per_chord","beats per chord",1,64,4)
@@ -42,6 +43,7 @@ function ChordSequencer:init()
     for v in xx:gmatch("%S+") do
       table.insert(chords,music.transpose_chord(v,x))
     end
+    self:update_chords()
     params:set("chordy_chords_show",table.concat(chords," "))
   end)
 
@@ -57,7 +59,7 @@ function ChordSequencer:init()
   })
 end
 
-function ChordSequencer:start()
+function ChordSequencer:update_chords()
   local chord_text=params:get("chordy_chords_show")
   if chord_text=="" then
     print("no chords to play")
@@ -71,6 +73,9 @@ function ChordSequencer:start()
       print("chordsequencer: added "..chord)
     end
   end
+end
+
+function ChordSequencer:start()
   self.beat=-1
   self.measure=-1
   self.chord_current=nil
