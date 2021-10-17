@@ -43,26 +43,55 @@ function note_on(note,velocity)
     end
   end
 
+  local ch=params:get("synthy_midiout_ch")-1
+  if ch==0 then
+    ch=1
+  end
+  if params:get("synthy_midiout_device")==2 then
+    -- output to ALL midi devices
+    for _,conn in ipairs(midi_connections) do
+      conn:note_on(note,velocity,ch)
+    end
+  elseif params:get("synthy_midiout_device")>2 then
+    midi_connections[params:get("synthy_midiout_device")-2]:note_on(note,velocity,ch)
+  end
+
   engine.synthy_note_on(note,velocity)
 end
 
 function note_off(note)
   synthy.notes[note]=false
+
+  local ch=params:get("synthy_midiout_ch")-1
+  if ch==0 then
+    ch=1
+  end
+  if params:get("synthy_midiout_device")==2 then
+    -- output to ALL midi devices
+    for _,conn in ipairs(midi_connections) do
+      conn:note_off(note,0,ch)
+    end
+  elseif params:get("synthy_midiout_device")>2 then
+    midi_connections[params:get("synthy_midiout_device")-2]:note_off(note,0,ch)
+  end
+
   engine.synthy_note_off(note)
 end
 
 function init()
 
   -- setup midi listening
-  local midi_devices={"any"}
+  midi_connections={}
+  local midi_devices={"none","any"}
   local midi_channels={"all"}
   for i=1,16 do
     table.insert(midi_channels,i)
   end
-  for _,dev in pairs(midi.devices) do
+  for j,dev in pairs(midi.devices) do
     if dev.port~=nil then
       table.insert(midi_devices,dev.name)
       local conn=midi.connect(dev.port)
+      table.insert(midi_connections,conn)
       conn.event=function(data)
         local d=midi.to_msg(data)
         -- visualize ccs
@@ -71,12 +100,15 @@ function init()
         --     print("cc",d.cc,d.val)
         --   end
         -- end
+        if params:get("synthy_midi_device")==1 then
+          do return end
+        end
         if dev.name~=midi_devices[params:get("synthy_midi_device")]
-          and params:get("synthy_midi_device")>1 then
+          and params:get("synthy_midi_device")>2 then
           do return end
         end
         if d.ch~=midi_channels[params:get("synthy_midi_ch")]
-          and params:get("synthy_midi_ch")>1 then
+          and params:get("synthy_midi_ch")>2 then
           do return end
         end
         if d.type=="note_on" then
@@ -100,7 +132,7 @@ function init()
     end
   end
 
-  params:add_group("SYNTHY",19)
+  params:add_group("SYNTHY",21)
   params:add_option("synthy_midi_device","midi device",midi_devices,1)
   params:add_option("synthy_midi_ch","midi channel",midi_channels,1)
   params:add_control("synthy_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
@@ -158,6 +190,8 @@ function init()
     engine.synthy_gyro_juice(x)
   end)
   params:add_option("synthy_chord_selection","chord randomness",{"popular","unpopular"},1)
+  params:add_option("synthy_midiout_device","midi out device",midi_devices,1)
+  params:add_option("synthy_midiout_ch","midi out channel",midi_channels,1)
 
   arms={}
   arms[1]=articulation:new()
