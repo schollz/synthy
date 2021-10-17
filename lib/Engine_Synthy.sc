@@ -174,10 +174,7 @@ Engine_Synthy : CroneEngine {
 					});
 				});
 			});
-
-
 		};
-
 
 
 		// add norns commands
@@ -218,8 +215,15 @@ Engine_Synthy : CroneEngine {
 			if (pedalSustainOn==false,{
 				// release all sustained notes
 				pedalSustainNotes.keysValuesDo({ arg note, val; 
-					fnNoteOff.(note);
-					pedalSustainNotes.removeAt(note);
+					if (synthyVoicesOn.at(note)==nil,{
+						pedalSustainNotes.removeAt(note);
+						fnNoteOff.(note);
+					});
+				});
+			},{
+				// add currently down notes to the pedal
+				synthyVoicesOn.keysValuesDo({ arg note, val; 
+					pedalSustainNotes.put(note,1);
 				});
 			});
 		});
@@ -229,8 +233,10 @@ Engine_Synthy : CroneEngine {
 			if (pedalSostenutoOn==false,{
 				// release all sustained notes
 				pedalSostenutoNotes.keysValuesDo({ arg note, val; 
-					fnNoteOff.(note);
-					pedalSostenutoNotes.removeAt(note);
+					if (synthyVoicesOn.at(note)==nil,{
+						pedalSostenutoNotes.removeAt(note);
+						fnNoteOff.(note);
+					});
 				});
 			},{
 				// add currently held notes
