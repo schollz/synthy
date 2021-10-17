@@ -1,4 +1,4 @@
--- synthy v0.3.0
+-- synthy v0.3.1
 -- soft, melancholic synth
 --
 -- llllllll.co/t/synthy
@@ -152,9 +152,9 @@ function init()
       crow.ii.jf.mode(1)
     end
   end)
-  params:add_control("synthy_gyro_juice","gyro juice", 
-    controlspec.new(0.1,8,'lin',0.1,2,"tsp",0.1/8))
-  params:set_action("synthy_gyro_juice", function (x) 
+  params:add_control("synthy_gyro_juice","gyro juice",
+  controlspec.new(0.1,8,'lin',0.1,2,"tsp",0.1/8))
+  params:set_action("synthy_gyro_juice",function (x)
     engine.synthy_gyro_juice(x)
   end)
   params:add_option("synthy_chord_selection","chord randomness",{"popular","unpopular"},1)
@@ -166,14 +166,14 @@ function init()
   arms[2]:init(128-20,62,1)
 
   synthy.filter=0
-  gyro_juice = 1.5
+  gyro_juice=1.5
   osc.event=function(path,args,from)
     -- from touchOSC mark I (the free one):
     -- https://hexler.net/touchosc-mk1/manual/configuration-options
     if path=="/accxyz" then
-      local gyro_juice = params:get("synthy_gyro_juice")
-      inc_pos_x(util.clamp((args[1] * gyro_juice) ^ 3,-2,2))
-      inc_lpf(util.clamp((args[2] * gyro_juice) ^ 3,-0.5,0.5))
+      local gyro_juice=params:get("synthy_gyro_juice")
+      inc_pos_x(util.clamp((args[1]*gyro_juice)^3,-2,2))
+      inc_lpf(util.clamp((args[2]*gyro_juice)^3,-0.5,0.5))
     end
     if args[1]==1 then
       synthy.filter=tonumber(args[2])
@@ -216,9 +216,9 @@ function init()
       synthy.note_played=true
       clock.sleep(3)
       local new_chords=table.concat(fourchords:random_weighted()," ")
-      if params:get("synthy_chord_selection")==2 then 
-	print("synthy: getting unpopular chords")
-	new_chords=table.concat(fourchords:random_unpopular()," ")
+      if params:get("synthy_chord_selection")==2 then
+        print("synthy: getting unpopular chords")
+        new_chords=table.concat(fourchords:random_unpopular()," ")
       end
       print("synthy: generated new chords: "..new_chords)
       params:set("chordy_chords",new_chords)
@@ -235,18 +235,17 @@ function init()
     end
   end)
 
-
   pos_x=30
   params:set("synthy_lpf",6000)
 end
 
 function inc_pos_x(inc)
-  params:delta("synthy_flanger", inc)
+  params:delta("synthy_flanger",inc)
   pos_x=math.floor(util.linlin(0,100,30,128.9,params:get("synthy_flanger")))
 end
 
 function inc_lpf(inc)
-  params:delta("synthy_lpf", inc)
+  params:delta("synthy_lpf",inc)
 end
 
 function enc(k,z)
@@ -262,7 +261,7 @@ end
 function key(k,z)
   if k==2 and z==1 then
     local new_chords=table.concat(fourchords:random_weighted()," ")
-    if params:get("synthy_chord_selection")==2 then 
+    if params:get("synthy_chord_selection")==2 then
       print("synthy: getting unpopular chords")
       new_chords=table.concat(fourchords:random_unpopular()," ")
     end
@@ -281,7 +280,7 @@ function redraw()
   local color=math.floor(util.linexp(-1,1,1,15.999,synthy.filter))
   -- local pos_y=math.floor(129-util.clamp(util.linlin(math.log(50),math.log(20000),1,150,math.log(synthy.filter)),1,128))
   local pos_y=math.floor(util.clamp(util.linlin(math.log(125),math.log(16000),90,1,math.log(synthy.filter)),10,128))
-  
+
   local ps={}
   local gy={}
   local base={}
