@@ -1,4 +1,4 @@
--- synthy v0.3.1
+-- synthy v0.3.2
 -- soft, melancholic synth
 --
 -- llllllll.co/t/synthy
@@ -49,11 +49,13 @@ function note_on(note,velocity)
   end
   if params:get("synthy_midiout_device")==2 then
     -- output to ALL midi devices
+    print("midiout: "..note)
     for _,conn in ipairs(midi_connections) do
       conn:note_on(note,velocity,ch)
     end
   elseif params:get("synthy_midiout_device")>2 then
-    midi_connections[params:get("synthy_midiout_device")-2]:note_on(note,velocity,ch)
+    print("midiout: "..note)
+    midi_connections[params:get("synthy_midiout_device")-2]:note_on(note,math.floor(velocity*127),ch)
   end
 
   engine.synthy_note_on(note,velocity)
@@ -133,7 +135,7 @@ function init()
   end
 
   params:add_group("SYNTHY",21)
-  params:add_option("synthy_midi_device","midi device",midi_devices,2)
+  params:add_option("synthy_midi_device","midi device",midi_devices,1)
   params:add_option("synthy_midi_ch","midi channel",midi_channels,1)
   params:add_control("synthy_detuning","squishy detuning",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
   params:add_control("synthy_tremolo","squishy tremolo",controlspec.new(0,20,'lin',0.1,1,'',0.1/20))
@@ -229,7 +231,6 @@ function init()
     -- data[2][..].v is volts
     -- data[2][..].n is name of note
     for i,d in ipairs(data[2]) do
-      tab.print(d)
       note_on(d.m,0.5)
     end
   end)

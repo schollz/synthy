@@ -92,7 +92,6 @@ end
 
 function ChordSequencer:step(t)
   self.beat=self.beat+1
-  print(self.beat)
   if self.beat%params:get("chordy_beats_per_chord")==0 then
     self.measure=self.measure+1
     self.chord_current=self.chords[self.measure%#self.chords+1]
