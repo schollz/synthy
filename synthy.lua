@@ -49,11 +49,13 @@ function note_on(note,velocity)
   end
   if params:get("synthy_midiout_device")==2 then
     -- output to ALL midi devices
+    local vel = util.round(util.linlin(0,1.0,0,127,velocity))
     for _,conn in ipairs(midi_connections) do
-      conn:note_on(note,velocity,ch)
+      conn:note_on(note,vel,ch)
     end
   elseif params:get("synthy_midiout_device")>2 then
-    midi_connections[params:get("synthy_midiout_device")-2]:note_on(note,velocity,ch)
+    local vel = util.round(util.linlin(0,1.0,0,127,velocity))
+    midi_connections[params:get("synthy_midiout_device")-2]:note_on(note,vel,ch)
   end
 
   engine.synthy_note_on(note,velocity)
