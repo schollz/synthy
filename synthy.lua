@@ -51,7 +51,7 @@ function note_on(note,velocity)
     -- output to ALL midi devices
     print("midiout: "..note)
     for _,conn in ipairs(midi_connections) do
-      conn:note_on(note,velocity,ch)
+      conn:note_on(note,math.floor(velocity*127),ch)
     end
   elseif params:get("synthy_midiout_device")>2 then
     print("midiout: "..note)
